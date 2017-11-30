@@ -1,0 +1,13 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var dhcpOrstatic = "2";'
+str = str .. 'var ip = "192.168.10.185";'
+str = str .. 'var netmask = "255.255.255.0";'
+str = str .. 'var vlanId = "0";'
+str = str .. 'var acIp1 = "192.168.10.186";'
+str = str .. 'var acIp2 = "192.168.10.187";'
+str = str .. 'var acIp3 = "192.168.10.188";'
+str = str .. 'var DNS1 = "114.114.114.114";'
+str = str .. 'var DNS2 = "8.8.8.8";'
+str = str .. 'var mac = "FC:2F:EF:WE:RN:SK";'
+io.write(str)

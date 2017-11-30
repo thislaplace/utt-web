@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"64fa14ca5036026fe5deefb9dada82b2"}*/
+define(function(require){return require("../template")("common/column",function(a){"use strict";var b=this,c=(b.$helpers,b.$escape),d=a.leftRatio,e=a.leftId,f=a.rightRatio,g=a.rightId,h="";return h+='<div class="container"> <div class="row"> <div class="col-xs-12 col-sm-12 col-md-',h+=c(d),h+=" col-lg-",h+=c(d),h+=' u-column-inner" id="',h+=c(e),h+='"> </div> <div class="col-xs-12 col-sm-12 col-md-',h+=c(f),h+=" col-lg-",h+=c(f),h+=' u-column-inner" id="',h+=c(g),h+='"> </div> </div> </div>',new String(h)})});

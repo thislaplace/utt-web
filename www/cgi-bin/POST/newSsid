@@ -1,0 +1,35 @@
+#!/usr/bin/lua
+require("nixio.util")
+require("luci.http")
+require("luci.sys")
+require("luci.dispatcher")
+local ltn12 = require("luci.ltn12")
+local function limitsource(handle, limit)
+    os.execute("echo limit  >/yuhao")
+    limit = limit or 0
+    local BLOCKSIZE = ltn12.BLOCKSIZE
+    os.execute("echo BLOCK  >>/yuhao")
+        
+        if limit < 1 then
+           handle:close()
+	   os.execute("echo \"limit lst 1\"  >>/yuhao")
+           return nil 
+        else
+           local read = (limit > BLOCKSIZE) and BLOCKSIZE or limit
+           limit = limit - read
+	   os.execute("echo \"limit gtt 1\"  >>/yuhao")
+           
+           local chunk = handle:read(read)
+           if not chunk then handle:close() end 
+	      os.execute("echo \"return chunk\" >>/yuhao")
+	      os.execute("echo \"" .. chunk .. "\" >>/yuhao")
+              return chunk
+        end 
+end
+
+--os.execute("echo $CONTENT_LENGTH >/yuhao")
+--local info = limitsource(io.stdin, tonumber(luci.sys.getenv("CONTENT_LENGTH")))
+local info = limitsource(io.stdin, 505)
+
+--os.execute("echo \"$REQUEST_METHOD $REQUEST_URI $QUERY_STRING $CONTENT_LENGTH\" >/yuhao")
+--os.execute("echo " .. info .. " >/yuhao")

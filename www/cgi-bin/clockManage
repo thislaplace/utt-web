@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var errorstr=""; var sysDateTimes="1293863760";var dst_switch="off";var Timezones="28800";var sntp_enables="on";var server1s="202.108.6.95";var server2s="24.56.178.140";var server3s="0.0.0.0";'
+io.write(str)

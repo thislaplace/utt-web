@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"805bef8a7d8b8599aaac934139d2024d"}*/
+define(function(require){return require("../../template")("common/inputs/title",function(a){"use strict";var b=this,c=(b.$helpers,a.display),d=a.sign,e=b.$escape,f=a.titleName,g="";return g+="<tr ",c||(g+='class="u-hide"'),g+=" ",""!=d&&(g+='data-control="',g+=e(d),g+='"'),g+='> <td colspan="3" class="u-inputs-title"> <span data-local="',g+=e(f),g+='">',g+=e(f),g+="</span> <div></div> </td> </tr> ",new String(g)})});

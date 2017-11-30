@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"7290ffbe9e831e4ef32877986f2ef808"}*/
+define(function(require){return require("../template")("common/moveTo",'<div class="u-moveto"> <span>\u5c06\u89c4\u5219</span> <select id=""></select> <span>\u79fb\u52a8\u5230</span> <select id=""></select> <span>\u4e4b\u524d</span> <button id="" class="btn-sm btn-primary">\u786e\u5b9a</button> </div> ')});

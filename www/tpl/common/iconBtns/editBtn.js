@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"8b29046b04b362a6f2ce220a8f0c7340"}*/
+define(function(require){return require("../../template")("common/iconBtns/editBtn",'<span class="glyphicon glyphicon-edit" data-event="edit"></span>')});

@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var revisions="ER748Wv3.0.0-170714";var errorstr="";var ActCode = "XwzRb1";var ProductID="杩涘彇 520W"; var hardwareID="V4.0";var isCheck = 1;var mainten = 1;var ProductLinkID="http://www.utt.com.cn/downloadcenter.php?filetypeid=3&model=ER748W&lang=zhcn";'
+io.write(str)

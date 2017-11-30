@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = "var time='0';var leftPwdNums='0';"
+io.write(str)

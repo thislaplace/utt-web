@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"e313d35dbd2cd83db20467d98e08fc3d"}*/
+define(function(require){return require("../template")("common/table",'<div class="table-overcover"> <table class="table table-bordered table-hover table-condensed"> <thead> </thead> <tbody></tbody> </table> </div>')});

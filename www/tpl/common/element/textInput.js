@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"5ed3ba621e73e5205882e1da65434ea2"}*/
+define(function(require){return require("../../template")("common/element/textInput",function(a){"use strict";var b=this,c=(b.$helpers,b.$escape),d=a.name,e=a.value,f="";return f+='<input type="text" name="',f+=c(d),f+='" value="',f+=c(e),f+='">',new String(f)})});

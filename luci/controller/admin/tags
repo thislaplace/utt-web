@@ -1,0 +1,55 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+action_apply	uci.lua	/^function action_apply()$/;"	f
+action_bandwidth	status.lua	/^function action_bandwidth(iface)$/;"	f
+action_changes	uci.lua	/^function action_changes()$/;"	f
+action_clock_status	system.lua	/^function action_clock_status()$/;"	f
+action_connections	status.lua	/^function action_connections()$/;"	f
+action_dmesg	status.lua	/^function action_dmesg()$/;"	f
+action_flashops	system.lua	/^function action_flashops()$/;"	f
+action_iptables	status.lua	/^function action_iptables()$/;"	f
+action_load	status.lua	/^function action_load()$/;"	f
+action_logout	index.lua	/^function action_logout()$/;"	f
+action_nameinfo	status.lua	/^function action_nameinfo(...)$/;"	f
+action_packages	system.lua	/^function action_packages()$/;"	f
+action_passwd	system.lua	/^function action_passwd()$/;"	f
+action_reboot	system.lua	/^function action_reboot()$/;"	f
+action_revert	uci.lua	/^function action_revert()$/;"	f
+action_syslog	status.lua	/^function action_syslog()$/;"	f
+action_wireless	status.lua	/^function action_wireless(iface)$/;"	f
+diag_command	network.lua	/^function diag_command(cmd, addr)$/;"	f
+diag_nslookup	network.lua	/^function diag_nslookup(addr)$/;"	f
+diag_ping	network.lua	/^function diag_ping(addr)$/;"	f
+diag_ping6	network.lua	/^function diag_ping6(addr)$/;"	f
+diag_traceroute	network.lua	/^function diag_traceroute(addr)$/;"	f
+diag_traceroute6	network.lua	/^function diag_traceroute6(addr)$/;"	f
+fork_exec	system.lua	/^function fork_exec(command)$/;"	f
+iface_delete	network.lua	/^function iface_delete(iface)$/;"	f
+iface_reconnect	network.lua	/^function iface_reconnect(iface)$/;"	f
+iface_shutdown	network.lua	/^function iface_shutdown(iface)$/;"	f
+iface_status	network.lua	/^function iface_status(ifaces)$/;"	f
+image_checksum	system.lua	/^	local function image_checksum()$/;"	f
+image_supported	system.lua	/^	local function image_supported()$/;"	f
+index	filebrowser.lua	/^function index()$/;"	f
+index	index.lua	/^function index()$/;"	f
+index	network.lua	/^function index()$/;"	f
+index	status.lua	/^function index()$/;"	f
+index	system.lua	/^function index()$/;"	f
+index	uci.lua	/^function index()$/;"	f
+lease_status	network.lua	/^function lease_status()$/;"	f
+ltn12_popen	system.lua	/^function ltn12_popen(command)$/;"	f
+param	network.lua	/^	local function param(x)$/;"	f
+ptable	network.lua	/^	local function ptable(x)$/;"	f
+storage_size	system.lua	/^	local function storage_size()$/;"	f
+switch_status	network.lua	/^function switch_status(switches)$/;"	f
+wifi_add	network.lua	/^function wifi_add()$/;"	f
+wifi_delete	network.lua	/^function wifi_delete(network)$/;"	f
+wifi_join	network.lua	/^function wifi_join()$/;"	f
+wifi_reconnect	network.lua	/^function wifi_reconnect(wnet)$/;"	f
+wifi_reconnect_shutdown	network.lua	/^local function wifi_reconnect_shutdown(shutdown, wnet)$/;"	f
+wifi_shutdown	network.lua	/^function wifi_shutdown(wnet)$/;"	f
+wifi_status	network.lua	/^function wifi_status(devs)$/;"	f

@@ -1,0 +1,20 @@
+#!/usr/bin/lua
+require "APCommon"
+require "APState"
+io.write("Content-type: text/html\n\n")
+
+local time = os.date("%Y-%m-%d %H:%M:%S");
+local deviceName = DEVICE_NAME
+local model = MODEL
+local sn = SN
+local HWVersion = HWVERSION
+local SWVersion = SWVERSION
+
+local str = string.format('var time = %q;', time)
+str = str .. string.format('var deviceName = %q;', DEVICE_NAME)
+str = str .. string.format('var model = %q;', MODEL)
+str = str .. string.format('var sn = %q;', SN)
+str = str .. string.format('var HWVersion = %q;', HWVERSION)
+str = str .. string.format('var SWVersion = %q;', SWVERSION)
+
+io.write(str)

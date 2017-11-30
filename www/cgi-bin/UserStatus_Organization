@@ -1,0 +1,10 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var allOnlineDatas = new Array();'
+local sta_num = 0
+
+str = str .. string.format('allOnlineDatas[%d] = {name:"Guest1", channel:"2.4G", vlanId:"0", normalIP:"192.168.10.165", normalMac:"FC:2F:EF:2D:88:AD", signalStrength:"-20", startTime:"150", inbits:"5", outbits:"10", txBytes:"12", rxBytes:"12"};', sta_num)
+
+str = str .. 'allOnlineDatas[1] = {name:"Guest2", channel:"2.4G", vlanId:"0", normalIP:"192.168.10.167", normalMac:"FC:2F:EF:2D:88:AD", signalStrength:"-20", startTime:"150", inbits:"50000", outbits:"10000", txBytes:"12000", rxBytes:"12000"};'
+
+io.write(str)

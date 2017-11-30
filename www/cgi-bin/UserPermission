@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'UserPermission="adm";'
+io.write(str)

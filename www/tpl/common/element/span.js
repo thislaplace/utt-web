@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"f903a98ce8430829a67b2bbad56d7831"}*/
+define(function(require){return require("../../template")("common/element/span",function(a){"use strict";var b=this,c=(b.$helpers,b.$escape),d=a.text,e="";return e+='<span data-local="',e+=c(d),e+='">',e+=c(d),e+="</span>",new String(e)})});

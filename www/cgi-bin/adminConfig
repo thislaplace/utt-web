@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var UserNames=new Array();var UserPass=new Array();var role=new Array();var prompt= "0";var flag= "0";UserNames[0] = "admin";UserPass[0] = "admin";role[0] = "adm";var maxNum=5;var errorstr="";'
+io.write(str)

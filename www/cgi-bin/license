@@ -1,0 +1,2 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")

@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"71003cbec0f20c852ee5d6d92d8c6f0d"}*/
+define(function(require){return require("../template")("common/footer",'<img src="/static/img/logo-green-small.png" class="bottom-uttimg" /> <span id="bottom-uttspan">\u7248\u6743\u6240\u6709\xa9\u4e0a\u6d77\u827e\u6cf0\u79d1\u6280\u6709\u9650\u516c\u53f8 \u4fdd\u7559\u4e00\u5207\u6743\u5229</span>')});

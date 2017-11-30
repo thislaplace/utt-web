@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"995cc541c08b74a2d5b34cd49527084f"}*/
+define(function(require){return require("../template")("common/ztreeplus",'<div class="u-treeplus"> <div class="u-treeSet"></div> <div class="u-tableSet"> <div class="u-tree-closeline"></div> <div class="u-plusSet"></div> </div> </div> ')});

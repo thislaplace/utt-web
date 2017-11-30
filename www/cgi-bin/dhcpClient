@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var UserIPs=new Array();var UserMacs=new Array();var UserMasks=new Array();var UserLeftTimes=new Array();var UserVids=new Array();var listTotalrecs=0;var errorstr="";'
+io.write(str)

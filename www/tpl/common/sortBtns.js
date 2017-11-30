@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"d0d2cdc1bdaa7260b31c1590ebf6f528"}*/
+define(function(require){return require("../template")("common/sortBtns",'<div class="utt-inline-block"> <span class="glyphicon glyphicon-arrow-up mouse-pointer" data-event="sort" data-event-type="asc"></span> <span class="glyphicon glyphicon-arrow-down mouse-pointer" data-event="sort" data-event-type="desc"></span> </div> ')});

@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"6f9bd9f76ae6c756ce3840b4c86ad9c7"}*/
+define(function(require){return require("../template")("common/path",function(a){"use strict";var b=this,c=(b.$helpers,b.$escape),d=a.path_list,e=b.$each,f=(a.list,a.index,"");return f+='<span>\u5f53\u524d\u4f4d\u7f6e\uff1a</span> <ol class="breadcrumb utt-inline-block"> <li data-local="',f+=c(d[0]),f+='">',f+=c(d[0]),f+="</li> ",e(d[1],function(a){f+=' <li data-local="',f+=c(a[1]),f+='">',f+=c(a[1]),f+="</li> "}),f+=' <li data-local="',f+=c(d[2]),f+='">',f+=c(d[2]),f+="</li> </ol> ",new String(f)})});

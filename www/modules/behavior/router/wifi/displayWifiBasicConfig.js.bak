@@ -1,0 +1,2527 @@
+define(function(require, exports, module){
+	require('jquery');
+	var DATA = {};
+	DATA.nullG2 = [];
+	DATA.nullG5 = [];
+	
+	DATA.saveG2 = '';
+	DATA.saveG5 = '';
+	DATA.objarr = '';
+	var Tips = require('Tips');
+	function tl(str){
+	    return require('Translate').getValue(str, ['error','common','doRouterConfig','doNetName']);
+	}
+	function display($con){
+		var Translate = require('Translate');
+		var dicNames = ['error','common','doRouterConfig','doNetName'];
+		$con.empty();
+		var TableContainer = require('P_template/common/TableContainer');
+		var conhtml = TableContainer.getHTML({}),
+			$tableCon = $(conhtml);
+		$con.append($tableCon);		
+		
+		showTable($tableCon);
+		
+		
+	}
+	
+	/* 获取数据 展示表格 */
+	function showTable($tableConDom){
+		DATA.nullG2 = [];
+		DATA.nullG5 = [];
+		
+		DATA.saveG2 = '';
+		DATA.saveG5 = '';
+		DATA.objarr = '';
+	
+		$.ajax({
+			type:"get",
+			url:"/cgi-bin/luci?optType=get_24_5g_Config|aspOutWirelessInterface",
+			success:function(result){
+				// 数据处理
+				processData(result);
+				//生成表格
+				makeTable($tableConDom);
+				$tableConDom.empty().append(DATA["tableObj"].getDom());
+			}
+		});
+	}
+	
+	function getbase(data,isShow){
+		
+		
+		
+		
+		 var Database = require('Database'),
+			database = Database.getDatabaseObj(); // 数据库的引用
+			// 声明字段列表
+			var fieldArr =[
+				  'ID',
+			  	  'ssid',    //ssid的名称
+				  'limit_type',	// 限速策略		（1：共享    2：独享）	
+				  'limit_down',	// 下行带宽
+				  'limit_up',	// 上行带宽
+				  
+				  'LanWlanSep',	// 有线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
+				  'multi_ssidSep',	// 无线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
+				  'encodeType',	// 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
+				  'broadcastEnables',	// 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
+				  'AuthModes',	// WAP版本			（WPA2：WPA2   WPA:WPA    WPA1WPA2:自动      WPAPSK:WPA-PSK  WPA2PSK:WPA2-PSK  WPAPSKWPA2PSK:自动 ）
+				  
+				  'wpaCiphers',	// 加密算法(wap/wap2)  （AES：AES	TKIP：TKIP	TKIPAES：自动）
+				  'radiusIPs',	// Radius服务器IP
+				  'radiusPorts',	// Radius端口			（取值范围：1-65535）
+				  'radiusPsswds',	// Radius密码		
+				  'keyUpdateCycs',	// 密钥更新周期(wap/wap2)	（默认是3600	取值范围：60-86400；0表示不更新）
+				  
+				  'wpapskCiphers',	// 加密算法（wpa-psk/wap2-psk）	（TKIP：TKIP	  AES：AES	TKIPAES：自动	）
+				  'pskPsswds',	// 无线密码
+				  'pskkeyUpdateCycs',	// 密钥更新周期（wpa-psk/wap2-psk）（默认是3600	取值范围：60-86400；0表示不更新）
+				  'RFChoose', // 射频勾选状况 2, 5 ,25
+				  'speedShow', // 限速策略
+				  
+				  'modes',	// 配对标识符
+				  'keyFormats', // 秘钥格式
+					'keyLength1s', // 秘钥类型1
+					'keyLength2s', // 
+					'keyLength3s', // 
+					
+					'keyLength4s', // 
+					'wepkey1s', // 秘钥1
+					'wepkey2s', // 
+					'wepkey3s', // 
+					'wepkey4s', // 
+					
+					'keynums',  // 秘钥值
+					'selModes', // 加密方式
+					'wepAuthType', // 认证类型
+					'goform',  // 新增修改接口
+					'delgoform', // 删除接口
+					'cantdel', // 是否可删除
+					'index',// 数据脚标
+					'pswdShow', // 表格展示的密码
+					'ifName',
+					'wlan_lan_dhcpEn',
+					'multi_ssid_dhcpEn'
+			];
+			
+			
+			
+			
+			
+			
+			var baseData = [];
+			var sl = data.SSIDNUM * 2;// 数据条目数
+			var j = 1;
+			for(var i = 0;i<sl;i++){
+				
+				var relmode = data.modes[i] === undefined?'-1':data.modes[i];
+				/* 对展示数据做隐藏判断 */
+				if(isShow){
+					if(DATA.ssidSupport == '2255'){
+						if(i<=((sl/2)-1)){
+							if(data.ssid[i] === '' || data.ssid[i] === undefined ){
+								DATA.nullG2.push(DATA.objarr[i]);
+								continue;
+							}
+						}else{
+							if(data.ssid[i] === '' || data.ssid[i] === undefined ){
+								DATA.nullG5.push(DATA.objarr[i]);
+								continue;
+							}
+							if(data.modes[i] != '-1'){
+								continue;
+							}
+						}
+					}else{
+						if(DATA.ssidSupport.indexOf('2')>=0){
+							if(data.ssid[i] === '' || data.ssid[i] === undefined ){
+								DATA.nullG2.push(DATA.objarr[i]);
+								continue;
+							}
+						}else if(DATA.ssidSupport.indexOf('5')>=0){
+							if(data.ssid[i] === '' || data.ssid[i] === undefined ){
+								DATA.nullG5.push(DATA.objarr[i]);
+								continue;
+							}
+						}
+					}
+				}
+				 /*将不可删除的条目进行标记*/
+				cantDel = false;
+				if(DATA.ssidSupport == '2255'){
+					if(i == 0 || i == (sl/2)){
+						cantDel = true;
+					}
+				}else{
+					if(i == 0){
+						cantDel = true;			
+					}
+				}
+				
+				
+				baseData.push([
+					Number(j),
+					data.ssid[i],
+					data.limit_type[i],
+					data.limit_down[i],
+					data.limit_up[i],
+					
+					data.LanWlanSep[i],
+					data.multi_ssidSep[i],
+					data.encodeType[i],
+					data.broadcastEnables[i],
+					data.AuthModes[i],
+					
+					data.wpaCiphers[i],
+					data.radiusIPs[i],
+					data.radiusPorts[i],
+					data.radiusPsswds[i],
+					data.keyUpdateCycs[i],
+					
+					data.wpapskCiphers[i],
+					data.pskPsswds[i],
+					data.pskkeyUpdateCycs[i],
+					(relmode == '-1'?((Number(i)+1)<=(sl/2)?'2':'5'):'25'),
+					data.limit_up[i]+'/'+data.limit_down[i],
+
+					relmode,
+					data.keyFormats[i],
+					data.keyLength1s[i],
+					data.keyLength2s[i],
+					data.keyLength3s[i],
+					
+					data.keyLength4s[i],
+					data.wepkey1s[i],
+					data.wepkey2s[i],
+					data.wepkey3s[i],
+					data.wepkey4s[i],
+					
+					data.keynums[i],
+					getSelMode(data,i),
+					getWepAuthType(data,i),
+					data.goform[i],
+					data.delgoform[i],
+					cantDel,
+					Number(i),
+					//getShowPswd(data,i),
+					data.ifName[i],
+					data.wlan_lan_dhcpEn[i],
+					data.multi_ssid_dhcpEn[i]
+				]);
+				j++;
+			}
+			
+			// 将数据存入数据表中
+			database.addTitle(fieldArr);
+			database.addData(baseData);
+			
+			return database;
+	}
+	/* 密码显示 */
+	function getShowPswd(data,i){
+		var pswd = '';
+		
+		var authtype = getSelMode(data,i);
+		if(authtype == 'WEP'){
+			pswd = data['wepkey'+data.keynums[i]+'s'][i] || '';
+		}else if(authtype == 'WPA/WPA2'){
+			pswd = data.radiusPsswds[i] || '';
+		}else if(authtype == 'WPA-PSK/WPA2-PSK'){
+			pswd = data.pskPsswds[i] || '';
+		}else{
+			pswd ='';
+		}
+		return pswd;
+	}
+	
+	/*认证类型*/
+	function getWepAuthType(data,i){
+		var AuthModes = data.AuthModes[i];
+		var wepAuthModes = '';
+		var str = 'NONE';
+		if(AuthModes=="OPEN"||AuthModes=="SHARED"||AuthModes=="WEPAUTO"){
+			wepAuthModes=AuthModes;
+		}else{
+			wepAuthModes = '';
+		}
+		return wepAuthModes;
+	}
+	
+	/*安全模式*/
+	function getSelMode(data,i){
+		var AuthModes = data.AuthModes[i];
+		var wpapskCiphers = data.wpapskCiphers[i];
+		var str = 'NONE';
+		if(AuthModes=="WPAPSK"||AuthModes=="WPA2PSK"||AuthModes=="WPAPSKWPA2PSK"){
+			str = 'WPA-PSK/WPA2-PSK';
+		}else if(AuthModes=="WPA"||AuthModes=="WPA2"||AuthModes=="WPA1WPA2"){
+			str = 'WPA/WPA2';
+		}else if(AuthModes=="WEP"){
+			if(wpapskCiphers=="NONE"){
+				str = 'NONE';
+			}else{
+				str = 'WEP';
+			}
+		}else if(AuthModes=="OPEN"||AuthModes=="SHARED"||AuthModes=="WEPAUTO"){
+			if(wpapskCiphers=="NONE"){
+				str = 'NONE';
+			}else{
+				str = 'WEP';
+			}
+		}else{
+			if(wpapskCiphers=="NONE"){
+				str = 'NONE';
+			}else{
+				str = 'WEP';
+			}
+		}
+		return str;
+	}
+	
+	
+	// 处理数据
+	function processData(res){
+		   var doEval = require('Eval');
+		   var variableArr = [
+			  'ssid',    //ssid的名称
+			  'limit_type',	// 限速策略		（1：共享    2：独享）	
+			  'limit_down',	// 下行带宽
+			  'limit_up',	// 上行带宽
+			  'LanWlanSep',	// 有线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
+			  'multi_ssidSep',	// 无线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
+			  'encodeType',	// 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
+			  'broadcastEnables',	// 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
+			  'AuthModes',	// WAP版本			（WPA2：WPA2   WPA:WPA    WPA1WPA2:自动      WPAPSK:WPA-PSK  WPA2PSK:WPA2-PSK  WPAPSKWPA2PSK:自动 ）
+			 
+			 'wpaCiphers',	// 加密算法(wap/wap2)  （AES：AES	TKIP：TKIP	TKIPAES：自动）
+			  'radiusIPs',	// Radius服务器IP
+			  'radiusPorts',	// Radius端口			（取值范围：1-65535）
+			  'radiusPsswds',	// Radius密码		
+			  'keyUpdateCycs',	// 密钥更新周期(wap/wap2)	（默认是3600	取值范围：60-86400；0表示不更新）
+			  'wpapskCiphers',	// 加密算法（wpa-psk/wap2-psk）	（TKIP：TKIP	  AES：AES	TKIPAES：自动	）
+			  'pskPsswds',	// 无线密码
+			  'pskkeyUpdateCycs',	// 密钥更新周期（wpa-psk/wap2-psk）（默认是3600	取值范围：60-86400；0表示不更新）
+		   	  
+		   	  'modes',	// 配对标识 -1 未配对 0~n 已配对
+		   	  'SSIDNUM',  // 条目数
+		   	  'keyFormats', // 秘钥格式
+				'keyLength1s', // 秘钥类型1
+				'keyLength2s', // 
+				'keyLength3s', // 
+				'keyLength4s', // 
+				'wepkey1s', // 秘钥1
+				'wepkey2s', // 
+				'wepkey3s', // 
+				'wepkey4s', // 
+				'keynums',  // 秘钥值
+				
+				'ssidSupport', // 2 22 5 55 2255 标识该设备支持的2.4G 5G方式
+		  		'goform', // 保存接口
+		  		'delgoform', // 删除接口
+		  		'ifName',  // 接口名称
+		  		'wlan_lan_dhcpEn',  // 无线隔离
+		  		'multi_ssid_dhcpEn',  // 有线隔离
+		  		'wirelessName','wirelessIp','wirelessNm','wirelessSsid','selectSsid'
+		  		
+		   ]; // 变量名称
+		   var result = doEval.doEval(res, variableArr);
+		   if (!result.isSuccessful) {
+		       Tips.showError('{parseStrErr}');
+		       return false;
+		    }
+		    var data = result["data"];
+		    /*假数据*/
+//		    data.modes = ['3','-1','-1','0'];
+		    
+		    DATA.ssidSupport = data.ssidSupport;
+		    
+		   DATA.wirelessName = data.ssid; // 所有的无线接口
+		   DATA.selectSsid = data.selectSsid || []; // 可选的无线ssid
+		   DATA.objarr =getbase(data).table('defaultTable').select();
+		   DATA["tableData2"] = getbase(data,true);
+		   console.log(DATA["tableData2"])
+	}
+	
+	
+	// 生成表格
+	function makeTable($tableCon){
+		// 表格上方按钮配置数据
+		var btnList = [
+		{
+			"id": "addWBConfig",
+			"name": '{add}',
+			 "clickFunc" : function($btn){
+			 		console.log("click add button")
+			 		makeModel('add',{})
+        		}
+		},
+		{
+			"id": "delWBConfig",
+			"name": '{delete}',
+			 "clickFunc" : function($btn){
+			    var primaryKeyArr = tableObj.getSelectInputKey('data-primaryKey'); 
+			    var length  = primaryKeyArr.length;			
+				
+				if (length > 0) {
+				    primaryKeyArr.forEach(function(primaryKey) {  
+						var dataArr = database.getSelect({primaryKey : primaryKey});
+						delssid(dataArr);
+					});
+				}else{
+					Tips.showInfo('{unSelectDelTarget}');		
+					return;				
+				}	
+        	}
+		}];
+		var database = DATA["tableData2"];
+		var headData = {
+			"btns" : btnList
+		};
+		
+		// 表格配置数据
+		var tableList = {
+			"database": database,
+			 otherFuncAfterRefresh:afterFunc,
+			"isSelectAll":true,
+			"dicArr" : ['error','common','doRouterConfig','doNetName'],
+			"titles": {
+				"ID"		 : {
+					"key": "ID",
+					"type": "text",
+				},
+			    "SSID"	  : {
+					"key": "ssid",
+					"type": "text"
+				},
+				"{RFIf}"		 : {
+					"key": "RFChoose",
+					"type": "text",
+					"filter":function(str){
+						if(str=='2'){
+							return '2.4G';
+						}else if(str=='5'){
+							return '5G';
+						}else if(str=='25'){
+							return '2.4G,5G';
+						}
+					}
+				},
+				"{addrPoolName}"		 : {
+					"key": "addrPoolName",
+					"type": "text",
+					"filter":function(str){
+						if(str == 'default' || str == ''){
+							return tl('default');
+						}else{
+							return str;
+						}
+					}
+				},
+				"{saveMode}"		 : {
+					"key": "selModes",
+					"type": "text",
+				},
+				"{wifiPassword}"		 : {
+					"key": "pswdShow",
+					"type": "text",
+				},
+				"远程认证"		 : {
+					"key": "remoteAuth",
+					"type": "checkbox",
+					"values":{
+						"on"  : true,
+                        "off" : false
+					}
+
+				},
+				// "{downUpSpeed}"		 : {
+				// 	"key": "speedShow",
+				// 	"type": "text",
+				// },
+				"{limitType}(bit/s)"		 : {
+					"key": "limitType",
+					"type": "text",
+				},
+				"{edit}": {
+					"type": "btns",
+					"btns": [
+						{
+							"type"      : "edit",
+							"clickFunc" : function($this){
+								
+								var data = database.getSelect({primaryKey : $this.attr('data-primaryKey')})[0];
+								
+								makeModel('edit',data)
+							}
+						},
+						{
+							"type"      : "delete",
+							"clickFunc" : function($this){
+								
+								var dataArr = database.getSelect({primaryKey : $this.attr('data-primaryKey')});
+								delssid(dataArr);
+								
+							}
+						},
+					]
+				}
+				
+				
+			}
+		};
+		var list = {
+			head: headData,
+			table: tableList
+		};
+		var Table = require('Table'),
+			tableObj = Table.getTableObj(list),
+			$table = tableObj.getDom();
+		// 将表格组件对象存入全局变量，方便其他函数调用
+		DATA["tableObj"] = tableObj;
+		
+		
+		// 添加编辑文本部分
+		
+		/*
+		function isOut($td){
+			var keys = $td.parent().find('[data-table-type="select"]').attr('data-primarykey');
+			var data = DATA["tableData"].getSelect({primaryKey : keys});
+			var tstuts = '0';
+			if(data){
+				var tstuts = data[0].apStatus;
+			}
+			return (tstuts == '1'?true:false);
+			
+		}
+		
+		*/
+		function afterFunc(NowTableObj){
+			
+			
+			
+			// 名称/MAC编辑
+			
+			NowTableObj.getDom().find('td[data-column-title="SSID"]').each(function(){
+				var $t = $(this);
+				if($t.children('span').length>0){
+					var thisText = $t.children('span').text();
+					var dpkey = $t.parent().find('[data-table-type="select"]').attr('data-primarykey');
+					
+					var linkhtml = '<a style="font-size:12px" class="u-inputLink link-forEdit" data-local="'+thisText+'" data-primarykey ="'+dpkey+'">'+thisText+'</a>';
+					var $lh = $(linkhtml);
+					
+					var $inputhtml = $('<input type="text" style="height:20px" data-primarykey ="'+dpkey+'"/>');
+					var $btnhtml = $('<button type="button" data-primarykey ="'+dpkey+'" class="btn btn-primary btn-forEditSave" style="position:absolute;top:-3px;left:50px">'+tl('save')+'</button>');
+					var $divhtml = $('<div class="for-textEdit u-hide" style="display:inline-block;width:auto;height:auto;position:relative"></div>');
+					$divhtml.append($inputhtml,$btnhtml);
+	//					$inputhtml.checkdemofunc('checkInput','name',0,11);
+					
+					
+					$t.empty();
+					$t.append($lh,$divhtml);
+				}
+			});
+			
+			
+			/*
+			NowTableObj.getDom().find('tr>td[data-column-title="{无线密码}"]').each(function(){
+			var $t = $(this);
+			
+				var $c = $t.children('span').eq(0);
+				var ttext = $c.text();
+				var $cover = $('<div style="display:inline-block" class="net_pswd_cover"></div>');
+				var $pswd = $('<span style="font-weight:bold" class="netsher_table_paswd" data-local="'+ttext+'" data-pswd="'+ttext+'"  data-hidepswd="······">······<span>');
+				var $eye = $('<span class="netsher_table_eyes glyphicon glyphicon-eye-open"></span>');
+				$cover.append($pswd,$eye);
+				$c.after($cover);
+				$c.remove();
+			});
+			*/
+			/* 密码修改*/
+			NowTableObj.getDom().find('td[data-column-title="{wifiPassword}"]').each(function(){
+				var $t = $(this);
+				if($t.children('span:not(".netsher_table_eyes")').length>0 /* && $t.children('span').text() != '' */){
+					var thisText = $t.children('span').text();
+					var dpkey = $t.parent().find('[data-table-type="select"]').attr('data-primarykey');
+					
+					var linkhtml = '<a style="font-size:12px;font-weight:bold" class="u-inputLink link-forEdit netsher_table_paswd" data-local="'+thisText+'" data-primarykey ="'+dpkey+'"  data-pswd="'+(thisText == ''? tl('noPassword'):thisText)+'"  data-hidepswd="******">******</a>';
+					var $lh = $(linkhtml);
+					
+					var $inputhtml = $('<input type="text" style="height:20px" data-primarykey ="'+dpkey+'"/>');
+					var $btnhtml = $('<button type="button" data-primarykey ="'+dpkey+'" class="btn btn-primary btn-forEditSave" style="position:absolute;top:-3px;left:50px;z-idnex:1">'+tl('save')+'</button>');
+					var $divhtml = $('<div class="for-textEdit u-hide" style="display:inline-block;width:auto;height:auto;position:relative"></div>');
+					$divhtml.append($inputhtml,$btnhtml);
+	//					$inputhtml.checkdemofunc('checkInput','name',0,11);
+					
+					var $eye = $('<span class="netsher_table_eyes glyphicon glyphicon-eye-open"></span>');
+					$t.empty();
+					if($t.prev().children('span').text() != 'WPA/WPA2'&& $t.prev().children('span').text() != 'WEP'){
+						if($t.prev().children('span').text() == 'WPA-PSK/WPA2-PSK'){
+							$t.append($lh,$divhtml,$eye);
+						}else{
+							var linkhtml2 = '<a style="font-size:12px;" class="u-inputLink link-forEdit netsher_table_paswd" data-local="'+tl('noPassword')+'" data-primarykey ="'+dpkey+'"  data-pswd="'+tl('noPassword')+'"  data-hidepswd="'+tl('noPassword')+'">'+tl('noPassword')+'</a>';
+							var $lh2 = $(linkhtml2);
+							$t.append($lh2,$divhtml);
+						}
+						
+					}else{
+						var linkhtml1 = '<span style="font-size:12px;font-weight:bold;margin-right:10px" class="span-forEdit netsher_table_paswd" data-local="'+thisText+'" data-primarykey ="'+dpkey+'"  data-pswd="'+thisText+'"  data-hidepswd="******">******</span>';
+						var $lh1 = $(linkhtml1);
+						$t.append($lh1,$eye);
+					}
+					
+				}
+			});
+			
+			
+			
+			
+		}
+		/* 绑定表格全局小眼睛 */
+		
+		$table.on('click','.netsher_table_eyes',function(event){
+			var ev = event || window.event;
+			var tar = ev.target || ev.srcElement;
+			var $t = $(tar);
+			
+			if($t.hasClass('glyphicon-eye-open')){
+				$t.removeClass('glyphicon-eye-open').addClass('glyphicon-eye-close');
+				var $p = $t.prevAll('.netsher_table_paswd');
+				$p.html($p.attr('data-pswd')).css('font-weight','normal');
+			}else{
+				$t.removeClass('glyphicon-eye-close').addClass('glyphicon-eye-open');
+				var $p = $t.prevAll('.netsher_table_paswd');
+				$p.html($p.attr('data-hidepswd')).css('font-weight','bold');
+			}
+		})
+		$(document).click(function(event){
+				$('.link-forEdit').removeClass('u-hide');
+				$('.for-textEdit').addClass('u-hide');
+				
+				var targ = (event || window.event).target || (event || window.event).srcElement;
+				
+				if($(targ).hasClass('for-textEdit')){
+					hdieOther($(targ).parent());
+				}else if($(targ).parent().hasClass('for-textEdit') && !$(targ).hasClass('btn-forEditSave')){
+					hdieOther($(targ).parent().parent());
+				}else if($(targ).hasClass('link-forEdit')){
+					hdieOther($(targ).parent());
+				}
+				
+				function hdieOther($td){
+					
+					$td.find('.link-forEdit').addClass('u-hide');
+					$td.find('.for-textEdit').removeClass('u-hide');
+					$td.find('.link-forSelect').addClass('u-hide');
+					$td.find('.for-SelectEdit').removeClass('u-hide');
+				}
+			})
+		// 全局绑定修改名称事件
+		$table.on('click','td[data-column-title="SSID"]>a.link-forEdit,td[data-column-title="SSID"]>div.for-textEdit>button.btn-forEditSave',function(event){
+				var e = event || window.event;
+				var tag = e.target || e.srcElement;
+				var $t = $(tag);
+				var primaryKey = $t.attr('data-primaryKey')
+				var data = DATA["tableData2"].getSelect({primaryKey : primaryKey})[0];
+				if($t.hasClass('link-forEdit')){
+					var $l = $(this);
+					var thisWidth = 80;
+					$l.addClass('u-hide');
+					$l.next('.for-textEdit').removeClass('u-hide');
+					$l.next('.for-textEdit').children('input').css('width',(thisWidth+15)+'px').val(data.SSID);
+					$l.next('.for-textEdit').children('button').css('left',(thisWidth+17)+'px');
+				}else if($t.hasClass('btn-forEditSave')){
+					var $b = $(this);
+					var checkInputFunc = require('P_core/CheckFunctions').getFunc('checkInput');
+					
+					var nowtext = $b.parent().children('input').val();
+					var checkres = checkInputFunc(nowtext,['name','1','32','6','eqName']);
+					
+					if(checkres.isCorrect){
+						
+						var data = database.getSelect({primaryKey : $t.parent().parent().parent().find('[data-table-type="select"]').attr('data-primaryKey')})[0];
+						data.ssid = nowtext;
+						makeModel('edit',data,true)
+						
+					}else{
+						Tips.showInfo(checkres.errorStr)
+					}
+				}
+				
+			});
+			
+			
+		// 全局绑定修改密码事件
+		$table.on('click','td[data-column-title="{wifiPassword}"]>a.link-forEdit,td[data-column-title="{wifiPassword}"]>div.for-textEdit>button.btn-forEditSave',function(event){
+				var e = event || window.event;
+				var tag = e.target || e.srcElement;
+				var $t = $(tag);
+				var primaryKey = $t.attr('data-primaryKey')
+				var data = DATA["tableData2"].getSelect({primaryKey : primaryKey})[0];
+				if($t.hasClass('link-forEdit')){
+					var $l = $(this);
+					var thisWidth = 80;
+					$l.addClass('u-hide');
+					$l.next('.for-textEdit').removeClass('u-hide');
+					$l.next('.for-textEdit').children('input').css('width',(thisWidth+15)+'px').val(data.wifiPassword);
+					$l.next('.for-textEdit').children('button').css({'left':(thisWidth+17)+'px','z-index':'1'});
+				}else if($t.hasClass('btn-forEditSave')){
+					var $b = $(this);
+					var checkInputFunc = require('P_core/CheckFunctions').getFunc('checkInput');
+					
+					var nowtext = $b.parent().children('input').val();
+					if(nowtext == ''){
+						data.selModes = 'NONE';
+						makeModel('edit',data,true)
+					}else{
+						var checkres = checkInputFunc(nowtext,['name','8','30','5']);
+						if(checkres.isCorrect){
+							var data = database.getSelect({primaryKey : $t.parent().parent().parent().find('[data-table-type="select"]').attr('data-primaryKey')})[0];
+							data.pskPsswds = nowtext;
+							data.selModes = 'WPA-PSK/WPA2-PSK';
+							
+							makeModel('edit',data,true)
+						}else{
+							Tips.showInfo(checkres.errorStr)
+						}
+						
+					}
+					
+					
+					
+					
+				}
+				
+			});
+	}
+	
+	/* 删除方法 */
+	function delssid(delarr){
+		
+		var candel = true;
+		delarr.forEach(function(obj,i){
+			if(obj.cantdel){
+				candel = false;
+			}
+		});
+		if(!candel){
+			Tips.showWarning('{canNotDeleteDefaultTemplate}');
+			return false;
+		}else{
+			Tips.showConfirm(tl('delconfirm'),function(){
+				/*整理需要删除的所有数据*/
+				var selurlArr = [];
+				delarr.forEach(function(obj,i){
+					selurlArr.push(obj.delgoform);
+					if(obj.RFChoose == '25'){
+						selurlArr.push(DATA.objarr[obj.modes].delgoform);
+					}
+				});
+				var checkDelArr = new Array(selurlArr.length);
+				
+				selurlArr.forEach(function(del,i){
+					 goDel(del,i)
+				});
+				settime();
+				function settime(){
+					setTimeout(function(){
+						var isover = true;
+						var isWrong = false;
+						var errorStr = '';
+						checkDelArr.forEach(function(dels){
+							if(!dels){
+								isover = false;
+							}
+							if(dels && dels != 1){
+								isWrong = true;
+								errorStr = dels;
+							}
+						});
+						if(isover){
+							if(isWrong){
+								Tips.showWarning(errorStr);
+							}else{
+								Tips.showSuccess('{delSuccess}');
+								$('[href="#1"]').trigger('click');
+							}
+						}else{
+							settime();
+						}
+						
+					},500)
+				}
+				
+				function goDel(url,i){
+					$.ajax({
+						url:'/goform/'+url,
+						type:'post',
+						data:'',
+						success:function(result){
+								var doEval = require('Eval');
+								var codeStr = result,
+									variableArr = ['status', 'errorstr'],
+									result = doEval.doEval(codeStr, variableArr),
+									isSuccess = result["isSuccessful"];
+								// 判断代码字符串执行是否成功
+								if (isSuccess) {
+									var data = result["data"],
+										status = data['status'];
+										errorstr = data['errorstr'];
+									if (status) {
+										// 显示成功信息
+										checkDelArr[i] = 1;
+									} else {
+										if(errorstr!=""){
+											checkDelArr[i] = errorstr;
+										}else{
+											checkDelArr[i] = '{delFail}';
+										}
+										if(checkSave){
+											$('[href="#1"]').trigger('click');
+										}
+									}
+								} else {
+									Tips.showWarning('{parseStrErr}');
+									if(checkSave){
+											$('[href="#1"]').trigger('click');
+										}
+								}					
+						}
+					});
+				}
+			},function(){
+				
+			})
+			
+		}
+		
+		
+	}
+	
+	/* 新增编辑 弹框*/
+	
+	function makeModel(type,data,checkSave){
+		
+		var ssid = '', // SSID
+			encodeType = 'UTF-8', // 
+			fre2 = '1', // 射频接口  = 1开启、0关闭
+			fre5 = '1',
+			broadcastEn = '0', // SSID隐藏  = 1开启、0关闭
+			isolateEn = '0', // 无线客户端隔离  = 1开启、0关闭
+			isolateEn1 = '0', // 有线无线隔离  = 1开启、0关闭
+			encryType = '0',// 加密方式   = 0无、1WEP、2WPA/WPA2、3 WPA-PSK/
+			wepAuthType = '0',// 认证类型 = 0自动、1开放系统、2共享密钥
+			wepFormat = '1', // 密钥格式   = 1 16进制、2 ASCII码
+			wepKeyRadio = '1',// 密钥选择
+			wepKey1Text = '', // 密钥文本1
+			wepKey2Text = '', // 密钥文本2
+			wepKey3Text = '', // 密钥文本3
+			wepKey4Text = '', // 密钥文本4
+			wepKey1Type = '0', // 密钥类型1  =  0禁用、1 64位、2 128位
+			wepKey2Type = '0', // 密钥类型2
+			wepKey3Type = '0', // 密钥类型3
+			wepKey4Type = '0', // 密钥类型4
+			wpaVersion1 = 'WPA1WPA2',//
+			wpaVersion2 = 'WPAPSKWPA2PSK',// 
+			wpaEncrp1 = 'TKIPAES', // 加密算法   = 0自动、1TKIP、2AES
+			wpaEncrp2 = 'TKIPAES',
+			radiusIP = '0.0.0.0', // Radius服务器IP
+			radiusPort = '1812',//  Radius服务器端口
+			radiusPsswd = '',// Radius密码
+			wpaTime = '0', // 密钥更新周期
+			pskPsswd = '', // 预共享密钥
+			pskTime = '0',// 密钥更新周期
+			share_select = '2', // 限速策略   = 2独享、1共享
+			txBand = '0',// 上行宽带
+			rxBand = '0',
+			ifName = 'default';// 无线接口名称
+			
+			console.log("yuhao++++++add")
+			
+			/*
+			var lanid={
+				    "value" : 0,                                                                                  
+                    "name"  : '',
+			}
+			modeInputJson.push(lanid);
+            DATA.poolVids.forEach(function(item, index){
+                var obj = { 
+                    "value" : DATA.poolVids[index],                                                                                  
+                    "name"  : DATA.poolVids[index],
+                };  
+                modeInputJson.push(obj);
+            }); 	
+            */
+           var modeInputJson = []; 
+//         if(!(DATA.vlanId.indexOf('0')>=0) || data.vlanId == ''){
+           	modeInputJson = [{value:'default',name:'{default}'}]; 
+//         }
+             var canuse = {};
+             DATA.wirelessName.forEach(function(obj,i){
+           	//canuse[obj] = DATA.addrPoolNames[i];
+		//			if(!(DATA.vlanId.indexOf(obj)>=0) || data.vlanId == obj){
+						var objnow = { 
+		                    "value" : obj,                                                                                  
+		                    "name"  : obj
+		                };  
+		                modeInputJson.push(objnow);
+		//			}
+             		
+             });
+             
+            
+		if(type == 'edit'){
+			fre2=(data.RFChoose == '2'||data.RFChoose == '25')?1:0;
+			fre5=(data.RFChoose == '5'||data.RFChoose == '25')?1:0;
+			ssid = data.ssid||ssid; // SSID
+			encodeType = data.encodeType||encodeType; // 
+
+			if(data.broadcastEnables=='1'){// SSID隐藏  = 0 关闭、1 开启
+				broadcastEn='1';
+			}else{
+				broadcastEn='0';
+			}
+			
+			isolateEn = data.wlan_lan_dhcpEn||isolateEn; // 无线客户端隔离  = 1开启、0关闭
+			isolateEn1 = data.multi_ssid_dhcpEn||isolateEn1; // 有线无线隔离  = 1开启、0关闭
+			dhcpPool = data.dzcname||'';// 地址池名称
+//			encryType = data.selModes || encryType;// 加密方式   = 0无、1WEP、2WPA/WPA2、3 WPA-PSK/
+			if(data.selModes == 'WPA-PSK/WPA2-PSK'){
+				encryType = 'WPAPSK';
+			}else if(data.selModes == 'WPA/WPA2'){
+				encryType = 'WPA';
+			}else if(data.selModes == 'WEP'){
+				encryType = 'WEP';
+			}else{
+				encryType = 'NONE';
+			}
+			wepAuthType = data.wepAuthType||wepAuthType;// 认证类型
+			wepKeyRadio = data.keynums || wepKeyRadio;// 密钥类型 0、1、2、3
+			wepFormat = data.keyFormats||wepFormat; // 密钥格式   = 1 16进制、2 共享密钥
+			wepKey1Text = data.wepkey1s||wepKey1Text; // 密钥文本1
+			wepKey2Text = data.wepkey2s||wepKey2Text; // 密钥文本2
+			wepKey3Text = data.wepkey3s||wepKey3Text; // 密钥文本3
+			wepKey4Text = data.wepkey4s||wepKey4Text; // 密钥文本4
+			wepKey1Type = data.keyLength1s||'0'; // 密钥类型1  =  0禁用、1 64位、2 128位
+			wepKey2Type = data.keyLength2s||'0'; // 密钥类型2
+			wepKey3Type = data.keyLength3s||'0'; // 密钥类型3
+			wepKey4Type = data.keyLength4s||'0'; // 密钥类型4
+//			alert(encryType)
+//			alert(data.wpaEncrp)
+//			alert(data.pskEncry)
+			if(encryType == 'WPA'){  //WEP模式
+				wpaVersion1 = data.AuthModes||wpaVersion1;// WAP版本  = 0自动、1WPA、2WPA2
+				wpaEncrp1 = data.wpaCiphers||wpaEncrp1; // 加密算法   = 0自动、1TKIP、2AES				
+			}
+			if(encryType == 'WPAPSK'){//WPA-PSK模式
+				wpaVersion2 = data.AuthModes||wpaVersion2;// WAP版本  = 0自动、1WPA、2WPA2
+				wpaEncrp2 = data.wpapskCiphers||wpaEncrp2; // 加密算法   = 0自动、1TKIP、2AES				
+			}
+			radiusIP = data.radiusIPs||radiusIP; // Radius服务器IP
+			radiusPort = data.radiusPorts||radiusPort;//  Radius服务器端口
+			radiusPsswd = data.radiusPsswds||radiusPsswd;// Radius密码
+			wpaTime = data.keyUpdateCycs||wpaTime; // 密钥更新周期
+			// pskPsswd = data.pskPsswd||'12345678'; // 预共享密钥
+			pskPsswd = data.pskPsswds||pskPsswd; // 预共享密钥
+			pskTime = data.pskkeyUpdateCycs||pskTime;// 密钥更新周期
+			share_select = data.limit_type||share_select; // 限速策略   = 2独享、1共享
+			txBand = data.limit_up||txBand;// 上行宽带
+			rxBand = data.limit_down||rxBand;// 下行宽带
+			ifName = data.ifName||ifName;
+		}
+		
+		var modallist = {
+			id:'tab_modal',
+			title:type=='add'?tl("add"):tl('edit'),
+			size:'large',
+			"btns" : [
+				 {
+	                "id"      : 'prev_tab',
+	                "name"		: '{prePg}',
+	                "clickFunc" : function($this){
+	                	DATA.tabModalObj.getDom().find('nav>ul.nav>li.active').prev().children('a').trigger('click');
+	                }
+	            },
+	            {
+	                "type"      : 'save',
+	                "clickFunc" : function($this){
+	                	editModalSave(type,false,data);
+	                }
+	            },
+	            {
+	                "type"      : 'reset',
+	                clickFunc : function(){
+	                }
+	            },
+	            {
+	                "id"      : 'next_tab',
+	                "name"		: '{nextPg}',
+	                "clickFunc" : function($this){
+	                	if(require('InputGroup').checkErr(DATA.tabModalObj.getDom().find(DATA.tabModalObj.getDom().find('nav>ul.nav>li.active').children('a').attr('href'))) == 0){
+	                		DATA.tabModalObj.getDom().find('nav>ul.nav>li.active').next().children('a').trigger('click');
+	                	}
+	                	
+	                }
+	            },
+	            {
+	                "type"      : 'close'
+	            }
+	        ]
+		};
+		var Modal = require('Modal');
+		var modalObj = Modal.getModalObj(modallist);
+		DATA.tabModalObj = modalObj;
+		/* 绑定特有的重填方法 */
+		var $newreset = modalObj.getDom().find('#reset').clone(false).attr('id','newreset');
+		modalObj.getDom().find('#reset').after($newreset);
+		modalObj.getDom().find('#reset').remove();
+		$newreset.click(function(){
+			var $active = $(modalObj.getDom().find('nav>ul.nav>li.active>a').attr('href')).wrap('<form></form>');
+			$active.parent()[0].reset();
+			$active.unwrap();
+			setTimeout(function(){
+				$active.find('[type="radio"]:checked,select').each(function(){
+					var $ti = $(this);
+//					if($ti.is(':visible')){
+						var thisTagName = $ti[0].tagName;
+						if(thisTagName == 'INPUT'){
+							$ti.trigger('click');
+						}else if(thisTagName == 'SELECT'){
+							$ti.trigger('change');
+						}
+//					}
+				});
+				//取消所有报错气泡
+				$active.find('.input-error').remove();
+			},1)
+		});
+		
+		
+		var Tabs = require('Tabs');
+		var tabsList = [
+			{"id" : "e1", "title" : tl('wirelessSet')},
+/*			
+			{"id" : "e2", "title" : tl('vlanSetVLAN')},
+*/
+			{"id" : "e3", "title" : tl('safeSet')},
+			{"id" : "e4", "title" : tl('bandwidthSet')}
+		];
+		var $tabsDom = Tabs.get$Dom(tabsList);
+		modalObj.insert($tabsDom);
+		var $tabmod = modalObj.getDom();
+		$tabmod.find('a[href="#e1"]').click(function(event) {
+			if(!$tabmod.find('#gjxx').hasClass('gjxx_close')){
+				$tabmod.find('#gjxx').trigger('click');
+			}
+			showbtns(1);
+		});
+		$tabmod.find('a[href="#e2"]').click(function(event) {
+			showbtns(2);
+		});
+		$tabmod.find('a[href="#e3"]').click(function(event) {
+			showbtns(2);
+		});
+		$tabmod.find('a[href="#e4"]').click(function(event) {
+			showbtns(3);
+		});
+		
+		function showbtns(btnsType){
+			var $pb = $tabmod.find('#prev_tab').parent();
+			var $nb = $tabmod.find('#next_tab').parent();
+			var $save = $tabmod.find('#save').parent();
+			if(btnsType == '1'){
+				// 起始tab
+				$pb.addClass('u-hide');
+				$nb.removeClass('u-hide');
+				$save.addClass('u-hide');
+			}else if(btnsType == '2'){
+				// 中间tab
+				$pb.removeClass('u-hide');
+				$nb.removeClass('u-hide');
+				$save.addClass('u-hide');
+			}else if(btnsType == '3'){
+				// 结束tab
+				$pb.removeClass('u-hide');
+				$nb.addClass('u-hide');
+				$save.removeClass('u-hide');
+			}
+		}
+		
+		
+		
+		
+		 var nonull = displaye1($tabmod.find('#e1'));
+		 console.log(nonull)
+		 if(nonull == 'nonull'){
+		 	Tips.showWarning('{reachMaxCountCantAdd}');
+		 	return false;
+		 }
+//	     displaye2($tabmod.find('#e2'));
+	     displaye3($tabmod.find('#e3'));
+	     displaye4($tabmod.find('#e4'));
+	     $tabmod.find(' a[href="#e1"]').trigger('click');
+	   	 $tabmod.find('.modal-body').css({'min-height':'217px'})
+	   	if(!checkSave){
+			modalObj.show();
+		}else{
+			editModalSave(type,checkSave,data);
+		}
+	   	/*
+	   	 	获得初始化的数据
+	   	 * */
+	   	var netName = '',
+	   	    ssid	= '';
+		/* 无线设置 */
+		function displaye1($tabcon){
+			var inputlist = [
+				{
+			    	"necessary" :true,
+			    	"prevWord"	:'SSID',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'ssid1',
+				        "value"      : ssid,
+				        "checkDemoFunc": ['checkInput', 'name', '1', '32',6] 
+				    },
+				    "afterWord": ''
+				},
+				{
+			    	"prevWord"	:'{spjkIf}',
+				    "inputData" : {
+				        "type"       : 'checkbox',
+				        "name"       : 'spjk',
+				        "defaultValue" : [(fre2==1?'fre2':'0'),(fre5==1?'fre5':'0')],
+				        items:[
+				        	{name:'2.4G' ,value:'fre2',checkOn:'1',checkOff:'0'},
+				        	{name:'5G' ,value:'fre5',checkOn:'1',checkOff:'0'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+					"necessary" :false,
+			    	"prevWord"	:'LAN口{name}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'ifName',
+				        "defaultValue" : ifName,
+				        'items':modeInputJson
+				    },
+				    "afterWord": ''
+				},
+				/*
+				{
+			    	"prevWord"	:'{autoSend}',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'vlanType',
+				        "defaultValue" : vlanType,
+				        items:[
+				        	{name:'{open}' ,value:'1'},
+				        	{name:'{close}' ,value:'0'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				*/
+				
+				/*
+				{
+					
+					"necessary" :false,
+			    	"prevWord"	:'{addrPoolName}',
+			    	"disabled" :'true',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'dhcpPool',
+				        "value" : dhcpPool,
+				    },
+				    "afterWord": ''
+				},
+				*/
+				{
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'gjxx',
+				        "value"      : ''
+				    },
+				},
+				{	
+					"sign":'gj',
+			    	"prevWord"	:'{hide}SSID',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'broadcastEnablew1',
+				        "defaultValue" : broadcastEn,
+				        items:[
+				        	{name:'{open}' ,value:'0'},
+				        	{name:'{close}' ,value:'1'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+/*				
+				{	
+					"sign":'gj',
+			    	"prevWord"	:'{maxCliNumLimit}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'cliMaxNum',
+				        "value"      : cliMaxNum,
+				        "checkDemoFunc" : ['checkNum','0','36'] 
+				    },
+				    "afterWord": ''
+				},
+*/				
+				{	
+					"sign":'gj',
+			    	"prevWord"	:'{wirelessIsolation}',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'LanWlanSep1',
+				        "defaultValue" : isolateEn,
+				        items:[
+				        	{name:'{open}' ,value:'1'},
+				        	{name:'{close}' ,value:'0'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	
+					"sign":'gj',
+			    	"prevWord"	:'{wireIsolation}',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'WiredSsidSep1',
+				        "defaultValue" : isolateEn1,
+				        items:[
+				        	{name:'{open}' ,value:'1'},
+				        	{name:'{close}' ,value:'0'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				// {	
+				// 	"sign":'gj',
+			 //    	"prevWord"	:'{有线客户端隔离}',
+				//     "inputData" : {
+				//         "type"       : 'radio',
+				//         "name"       : 'yxkhdgl',
+				//         "defaultValue" : 'on',
+				//         items:[
+				//         	{name:'{开启}' ,value:'1'},
+				//         	{name:'{关闭}' ,value:'0'}
+				//         ]
+				//     },
+				//     "afterWord": ''
+				// },
+				// {	
+				// 	"sign":'gj',
+			 //    	"prevWord"	:'{多SSID隔离}',
+				//     "inputData" : {
+				//         "type"       : 'radio',
+				//         "name"       : 'dSSIDgl',
+				//         "defaultValue" : 'on',
+				//         items:[
+				//         	{name:'{开启}' ,value:'1'},
+				//         	{name:'{关闭}' ,value:'0'}
+				//         ]
+				//     },
+				//     "afterWord": ''
+				// }
+			];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputlist);
+			/* 电脑/手机优先 */
+			$input.find('[name="ssid1"]').parent().next().append('<select name="encodeType1" style="margin-left:10px"><option value="UTF-8" data-local="{phoneFirst}"'+(encodeType=='UTF-8'?'selected="selected"':'')+'>{phoneFirst}</option><option value="GBK" data-local="{computerFirst}" '+(encodeType=='GBK'?'selected="selected"':'')+'>{computerFirst}</option><option value="BIG5" data-local="{电脑优先（繁体）}"'+(encodeType=='BIG5'?'selected="selected"':'')+'>{电脑优先（繁体）}</option></select>');
+			
+			/* 自动下发 切换 */
+			makeTheVlanTypeChange()
+			$input.find('[name="vlanType"]').click(function(){
+				makeTheVlanTypeChange()
+			})
+			function makeTheVlanTypeChange(){
+				if($input.find('[name="vlanType"]:checked').val() == '1'){
+					$input.find('[name="vlanId"]').attr('disabled','disabled');
+				}else{
+					$input.find('[name="vlanId"]').removeAttr('disabled');
+				}
+			}
+			
+			/*vlan切换*/
+			/*
+			makeTheVlanIdChange()
+			$input.find('[name="vlanId"]').change(function(){
+				makeTheVlanIdChange()
+			})
+			function makeTheVlanIdChange(){
+				$input.find('[name="dhcpPool"]').val(canuse[$input.find('[name="vlanId"]').val()]);
+			}
+			*/
+			/* 新增按钮 */
+			var linkdatas1 = [
+				{
+					id : 'tab2-add1',
+					name : tl("add"),
+					clickFunc :function($thisDom){
+						addVLANTab($input.find('[name="ifName"]'));
+					}
+				}
+			];
+		
+			InputGroup.insertLink($input,'ifName',linkdatas1);
+			$input.find()
+			
+			/*
+			var linkdatas2 = [
+				{
+					id : 'tab2-add2',
+					name : tl("add"),
+					clickFunc :function($thisDom){
+						addDZCTab($input.find('[name="dhcpPool"]'),$input.find('[name="vlanId"]'));
+					}
+				}
+			];
+		
+			InputGroup.insertLink($input,'dhcpPool',linkdatas2);
+			*/
+			$input.find('[name="vlanId"]').after($input.find('#tab2-add1').css('margin-left','10px'));
+			/*
+			$input.find('[name="dhcpPool"]').after($input.find('#tab2-add2').css('margin-left','10px'));
+			*/
+			/* 高级选项切换*/
+			$input.find('[name="gjxx"]').parent().prev().attr('colspan','2').empty().append('<a id="gjxx" class="gjxx_close" data-local="{advancedOptions}">{advancedOptions}<a/>');
+			$input.find('[name="gjxx"]').parent().remove();
+			$input.find('tr[data-control="gj"]').addClass('u-hide');
+			$input.find('#gjxx').css('cursor','pointer').click(function(){
+				var $t = $(this);
+				if($t.hasClass('gjxx_close')){
+					$t.removeClass('gjxx_close');
+					$t.text(tl('hideAdvancedOptions'));
+					$input.find('tr[data-control="gj"]').removeClass('u-hide');
+				}else{
+					$t.addClass('gjxx_close');
+					$t.text(tl('advancedOptions'));
+					$input.find('tr[data-control="gj"]').addClass('u-hide');
+				}
+			})
+			$tabcon.empty().append($input);
+			
+			
+			$input.find('tr').each(function(){
+				$(this).children('td').eq(0).css('width','101px')
+			})
+			
+			/* 删除不可被勾选的2.4G 5G*/
+			DATA.saveG2 = '';
+			DATA.saveG5 = '';
+			if(type == 'add'){
+				if(DATA.nullG2.length == 0){
+					$input.find('[name="spjk"][value="fre2"]').attr('disabled','disabled').prop('checked',false);
+				}else{
+					DATA.saveG2 = DATA.nullG2[0];
+				}
+				if(DATA.nullG5.length == 0){
+					$input.find('[name="spjk"][value="fre5"]').attr('disabled','disabled').prop('checked',false);
+				}else{
+					DATA.saveG5 = DATA.nullG5[0];
+				}
+				if(DATA.nullG2.length == 0 && DATA.nullG5.length == 0){
+					DATA.saveG2 = '';
+					DATA.saveG5 = '';
+					return 'nonull';
+				}
+				
+			}else{
+				if(data.RFChoose == '2'){
+					DATA.saveG2 = data;
+					if(DATA.nullG5.length == 0){
+						$input.find('[name="spjk"][value="fre5"]').attr('disabled','disabled').prop('checked',false);
+					}else{
+						DATA.saveG5 = DATA.nullG5[0];
+					}
+				}else if(data.RFChoose == '5'){
+					DATA.saveG5 = data;
+					if(DATA.nullG2.length == 0){
+						$input.find('[name="spjk"][value="fre2"]').attr('disabled','disabled').prop('checked',false);
+					}else{
+						DATA.saveG2 = DATA.nullG2[0];
+					}
+				}else if(data.RFChoose == '25'){
+					DATA.saveG2 = data;
+					DATA.saveG5 = DATA.objarr[data.modes];
+				}
+			}
+			
+			console.log('************当前操作的两个对象*************')
+			console.log(DATA.saveG2)
+			console.log(DATA.saveG5)
+			console.log('----------当前为空的2.4G 5G数组-----------')
+			console.log(DATA.nullG2)
+			console.log(DATA.nullG5)
+			console.log('++++++++所有数据+++++++++++')
+			console.log(DATA.objarr)
+			
+			var tranDomArr = [$input,$tabmod];
+			var dicArr     = ['error','common','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);	
+
+		}
+		
+		/* VLAN设置 */
+		function displaye2($tabcon){
+			
+			var inputlist = [
+				{
+					"necessary" :false,
+			    	"prevWord"	:'VLAN ID',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'vlanId',
+				        "defaultValue" : vlanId,
+				        'items':modeInputJson
+				    },
+				    "afterWord": ''
+				},
+				{
+					"necessary" :false,
+			    	"prevWord"	:'{addrPoolName}',
+			    	"disabled" :'true',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'dhcpPool',
+				        "value" : dhcpPool,
+				    },
+				    "afterWord": ''
+				},
+			];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputlist);
+			
+			/* 新增按钮 */
+			var linkdatas1 = [
+				{
+					id : 'tab2-add1',
+					name : tl("add"),
+					clickFunc :function($thisDom){
+						addVLANTab($input.find('[name="vlanId"]'));
+					}
+				}
+			];
+		
+			InputGroup.insertLink($input,'vlanId',linkdatas1);
+			
+			var linkdatas2 = [
+				{
+					id : 'tab2-add2',
+					name : tl("add"),
+					clickFunc :function($thisDom){
+						addDZCTab($input.find('[name="dhcpPool"]'),$input.find('[name="vlanId"]'));
+					}
+				}
+			];
+		
+			InputGroup.insertLink($input,'dhcpPool',linkdatas2);
+			
+			
+			
+			$tabcon.empty().append($input);
+			var tranDomArr = [$input];
+			var dicArr     = ['error','common','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);				
+		}
+		
+		/* 安全设置 */
+		function displaye3($tabcon){
+			
+			var inputlist = [
+				{
+			    	"prevWord"	:'{screType}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'secMode1',
+				        "defaultValue" : encryType,
+				        items:[
+				        	{name:'{noneEncry}' ,value:'NONE',control:'0'},
+				        	{name:'WEP' ,value:'WEP',control:'1'},
+				        	{name:'WPA/WPA2' ,value:'WPA',control:'2'},
+				        	{name:'WPA-PSK/WPA2-PSK' ,value:'WPAPSK',control:'3'},
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+			    	"prevWord"	:'WAP{version}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'secMode1',
+				        "defaultValue" : encryType,
+				        items:[
+				        	{name:'自动' ,value:'NONE',control:'0'},
+				        	{name:'WAP' ,value:'WPA',control:'1'},
+				        	{name:'WPA2' ,value:'WPA2',control:'2'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+			    	"prevWord"	:'{screEncrp}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'secMode1',
+				        "defaultValue" : encryType,
+				        items:[
+				        	{name:'自动' ,value:'NONE',control:'0'},
+				        	{name:'AES' ,value:'AES',control:'1'},
+				        	{name:'TKIP' ,value:'TKIP',control:'2'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+					"necessary":true,
+			    	"prevWord"	:'预{shareKey}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'shareKey',
+				        // "defaultValue" : encryType,
+				    },
+				    "afterWord": '(取值范围:8~30个字符)'
+				},
+				{
+					"necessary":true,
+			    	"prevWord"	:'{key}更新周期',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'shareKey',
+				        // "defaultValue" : encryType,
+				    },
+				    "afterWord": '秒(取值范围:60~86400;0表示不更新)'
+				},
+				
+				/* WEP */
+				{	sign:'1',
+			    	"prevWord"	:'{authType}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wepAuthMode1',
+				        "defaultValue" : wepAuthType,
+				        items:[
+					        {name:'{autoAuth}' ,value:'WEPAUTO'},
+					        {name:'{openSystem}' ,value:'OPEN'},
+				        	{name:'{shareKey}' ,value:'SHARED'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	sign:'1',
+			    	"prevWord"	:'{keyType}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'keyFormat',
+				        "defaultValue" : wepFormat,
+				        items:[
+					        {name:'{hexType}' ,value:'0'},
+					        {name:'{asciiType}' ,value:'1'},
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				
+				{
+					sign:'1',
+			    	"prevWord"	:'',
+				    "inputData" : {
+				        "type"       : 'words',
+				        "name"       : '',
+				        "value" : '{authTip}'
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'1',
+			    	"prevWord"	:'{keyChoose}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'wepmiyue',
+				        value: ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'1',
+			    	"prevWord"	:'{key}1',
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'wepkey1',
+				        "value"      : wepKey1Text,
+				        "eye"		: true,
+				        "checkDemoFunc" : ['checkDemoPassword1','keyLength1',"keyFormat", "keynum",1] 
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'1',
+			    	"prevWord"	:'{key}2',
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'wepkey2',
+				        "value"      : wepKey2Text,
+				        "eye"		: true,
+				        "checkDemoFunc" : ['checkDemoPassword1','keyLength2',"keyFormat", "keynum",2] 
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'1',
+			    	"prevWord"	:'{key}3',
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'wepkey3',
+				        "value"      : wepKey3Text,
+				        "eye"		: true,
+				        "checkDemoFunc" : ['checkDemoPassword1','keyLength3',"keyFormat", "keynum",3] 
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'1',
+			    	"prevWord"	:'{key}4',
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'wepkey4',
+				        "value"      : wepKey4Text,
+				        "eye"		: true,
+				        "checkDemoFunc" : ['checkDemoPassword1','keyLength4',"keyFormat",  "keynum",4] 
+				    },
+				    "afterWord": ''
+				},
+				 /* WPA/WPA2 */
+				{	sign:'2',
+			    	"prevWord"	:'WPA{version}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wpaAuthMode1',
+				        "defaultValue" : wpaVersion1,
+				        items:[
+				        	{name:'{autoAuth}' ,value:'WPA1WPA2'},
+				        	{name:'WPA' ,value:'WPA'},
+				        	{name:'WPA2' ,value:'WPA2'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	sign:'2',
+			    	"prevWord"	:'{screEncrp}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wpaCipher1',
+				        "defaultValue" : wpaEncrp1,
+				        items:[
+				        	{name:'{autoAuth}' ,value:'TKIPAES'},
+				        	{name:'WPA-PSK' ,value:'WPAPSK'},
+				        	{name:'WPA2-PSK' ,value:'WPA2PSK'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	sign:'3',
+			    	"prevWord"	:'WPA{version}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wpapskAuthMode1',
+				        "defaultValue" : wpaVersion2,
+				        items:[
+				        	{name:'{autoAuth}' ,value:'WPAPSKWPA2PSK'},
+				        	{name:'WPA-PSK' ,value:'WPAPSK'},
+				        	{name:'WPA2-PSK' ,value:'WPA2PSK'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	sign:'3',
+			    	"prevWord"	:'{screEncrp}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wpapskCipher1',
+				        "defaultValue" : wpaEncrp2,
+				        items:[
+				        	{name:'{autoAuth}' ,value:'TKIPAES'},
+				        	{name:'TKIP' ,value:'TKIP'},
+				        	{name:'AES' ,value:'AES'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'2',
+			    	"prevWord"	:'Radius{server}IP',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'radiusIP',
+				        "value"		 : radiusIP,
+				        "checkFuncs" : ['checkIP']
+				    },
+				    "afterWord": ''
+				},
+				{
+					sign:'2',
+			    	"prevWord"	:'Radius{serverPort}',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'radiusPort',
+				        "value": radiusPort,
+				        "checkDemoFunc" : ['checkNum','1','65535'] 
+
+				    },
+				    "afterWord": '{serverPortTip}'
+				},
+				{
+					sign:'2',
+			    	"prevWord"	:'Radius{scret}',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'radiusPsswd',
+				        "value": radiusPsswd,
+				        "eye"	:true,
+				        "checkDemoFunc": ['checkInput', 'name', '8', '30', '5']
+				    },
+				    "afterWord": '{scretTip}'
+				},
+				{
+					sign:'2',
+			    	"prevWord"	:'{keyFreshTime}',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'keyUpdateCyc1',
+				        "value"		 : wpaTime,
+				        "checkDemoFunc" : ['checkInput','num', '60','86400', 'freshTime'] 
+				    },
+				    "afterWord"		 : '{keyFreshTimeTip}'
+				},
+				/*
+				{
+					sign:'2',
+			    	"prevWord"	:'{自动下发}',
+				    "inputData" : {
+				        "type"       : 'checkbox',
+				        "name"       : 'vlanType',
+				        defaultValue: [(vlanType=='1'?'on':'')],
+				        items:[
+				        	{name:'',value:'on',checkOn:'1',checkOff:'0'},
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				*/
+				
+				
+				/* WPA-PSK/WPA2-PSK */
+				
+				/*
+				{	sign:'3',
+			    	"prevWord"	:'WPA{版本}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'wpaVersion',
+				        "defaultValue" : wpaVersion,
+				        items:[
+				        	{name:'WPA' ,value:'WPA'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	sign:'3',
+			    	"prevWord"	:'{加密算法}',
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'jmsf2',
+				        "defaultValue" : 'AES',
+				        items:[
+				        	{name:'AES' ,value:'AES'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				*/
+				{
+					sign:'3',
+			    	"prevWord"	:'{preShareKey}',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'password',
+				        "name"       : 'pskPsswd1',
+				        "value"		 : pskPsswd,
+				        "eye"		:true,
+				        "checkDemoFunc": ['checkInput', 'name', '8', '30', '5']
+				    },
+				    "afterWord": '{preShareKeyTip}'
+				},
+				{
+					sign:'3',
+			    	"prevWord"	:'{keyFreshTime}',
+			    	"necessary" : true,
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'pskkeyUpdateCyc1',
+				        "value"		 : pskTime,
+				        "checkDemoFunc" : ['checkInput','num','60','86400', 'freshTime'] 
+				    },
+				    "afterWord": '{keyFreshTimeTip}'
+				},
+			];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputlist);
+			
+			// 使顶格td长度固定
+			$input.find('tr').children(':first').width('138px');
+			
+			// 密钥titile
+			$input.find('[name="wepmiyue"]').after('<span style="margin-left:24px"  data-local="{webKey}">{webKey}</span><span style="margin-left:115px" data-local="{passwdType}">{passwdType}</span>');
+			$input.find('[name="wepmiyue"]').parent().attr('colspan',2).next().remove();
+			$input.find('[name="wepmiyue"]').remove();
+			
+			// 密钥1234
+			$input.find('[name="wepkey1"]').before('<input type="radio" name="keynum" value="1" style="margin-right:10px" '+(wepKeyRadio=='1'?'checked="true"':'')+'/>');
+			$input.find('[name="wepkey2"]').before('<input type="radio" name="keynum" value="2" style="margin-right:10px" '+(wepKeyRadio=='2'?'checked="true"':'')+'/>');
+			$input.find('[name="wepkey3"]').before('<input type="radio" name="keynum" value="3" style="margin-right:10px" '+(wepKeyRadio=='3'?'checked="true"':'')+'/>');
+			$input.find('[name="wepkey4"]').before('<input type="radio" name="keynum" value="4" style="margin-right:10px" '+(wepKeyRadio=='4'?'checked="true"':'')+'/>');
+			
+			
+			$input.find('[name="wepkey1"],[name="wepkey2"],[name="wepkey3"],[name="wepkey4"]').parent().attr('colspan',2);
+			$input.find('[name="wepkey1"]').after('<select class="edittab_mytype" name="keyLength1" style="margin-left:10px;width:80px" >'+
+													'<option value="0" data-local="{disable}" '+(wepKey1Type=='0'?'selected="selected"':'')+'>{disable}</option>'+
+													'<option value="5" data-local="64{bit}" '+(wepKey1Type=='5'?'selected="selected"':'')+'>64{bit}</option>'+
+													'<option value="13" data-local="128{bit}" '+(wepKey1Type=='13'?'selected="selected"':'')+'>128{bit}</option>'+
+												'</select>');
+			$input.find('[name="wepkey2"]').after('<select class="edittab_mytype" name="keyLength2" style="margin-left:10px;width:80px" >'+
+													'<option value="0" data-local="{disable}" '+(wepKey2Type=='0'?'selected="selected"':'')+'>{disable}</option>'+
+													'<option value="5" data-local="64{bit}" '+(wepKey2Type=='5'?'selected="selected"':'')+'>64{bit}</option>'+
+													'<option value="13" data-local="128{bit}" '+(wepKey2Type=='13'?'selected="selected"':'')+'>128{bit}</option>'+
+												'</select>');
+			$input.find('[name="wepkey3"]').after('<select class="edittab_mytype" name="keyLength3" style="margin-left:10px;width:80px" >'+
+													'<option value="0" data-local="{disable}" '+(wepKey3Type=='0'?'selected="selected"':'')+'>{disable}</option>'+
+													'<option value="5" data-local="64{bit}" '+(wepKey3Type=='5'?'selected="selected"':'')+'>64{bit}</option>'+
+													'<option value="13" data-local="128{bit}" '+(wepKey3Type=='13'?'selected="selected"':'')+'>128{bit}</option>'+
+												'</select>');
+			$input.find('[name="wepkey4"]').after('<select class="edittab_mytype" name="keyLength4" style="margin-left:10px;width:80px" >'+
+													'<option value="0" data-local="{disable}" '+(wepKey4Type=='0'?'selected="selected"':'')+'>{disable}</option>'+
+													'<option value="5" data-local="64{bit}" '+(wepKey4Type=='5'?'selected="selected"':'')+'>64{bit}</option>'+
+													'<option value="13" data-local="128{bit}" '+(wepKey4Type=='13'?'selected="selected"':'')+'>128{bit}</option>'+
+												'</select>');
+			$input.find('[name="wepkey1"],[name="wepkey2"],[name="wepkey3"],[name="wepkey4"]').parent().next().remove();
+			/* 修改部分样式*/
+			$input.find('[data-control="1"]').addClass('democonrrr');
+			$input.find('.democonrrr .u-password-eye').css({'left':'164px','z-index':'100'});
+			/* 绑定部分事件  */
+			$input.find('select.edittab_mytype').change(function(){
+				makeEdittabMytypeChange(this);
+			});
+			
+			setTimeout(function(){
+				$input.find('select.edittab_mytype').trigger('change');
+				makeWepKeyRadioChange()
+			},500);
+			
+			
+			function makeEdittabMytypeChange(thisDom){
+				var $t = $(thisDom);
+				var $chooseDom = $t.prevAll('input[type="radio"]');
+				var $inputDom = $t.prevAll('input[type="text"],input[type="password"]');
+				if($t.val() != '0'){
+					$chooseDom.removeAttr('disabled');
+					$inputDom.removeAttr('disabled');
+					$inputDom.blur();
+				}else{
+					$chooseDom.attr('disabled','disabled');
+					$inputDom.attr('disabled','disabled');
+					$inputDom.val('').blur();
+				}
+			}
+			
+			$input.find('[name="wepKeyRadio"]').click(function(){
+				makeWepKeyRadioChange();
+				})
+			function makeWepKeyRadioChange(){
+				InputGroup.checkErr($input.find('[name="wepkey1"],[name="wepkey2"],[name="wepkey3"],[name="wepkey4"]').parent())
+			}
+			
+			
+			$input.find('[name="wepFormat"]').change(function(){
+				InputGroup.checkErr($input.find('[name="wepkey1"],[name="wepkey2"],[name="wepkey3"],[name="wepkey4"]').parent())
+			});
+			
+			
+			
+			$tabcon.empty().append($input);
+			$tabcon.append('<style>.democonrrr .input-error{left:276px !important;}</style>')
+			var tranDomArr = [$input];
+			var dicArr     = ['error','common','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);			
+		}
+		
+		/* 带宽设置 */
+		function displaye4($tabcon){
+			
+			var inputlist = [
+				{	
+			    	"prevWord"	:'{limitType}',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'share_select1',
+				        "defaultValue" : share_select,
+				        items:[
+				        	{name:'{shareLimitSpeed}' ,value:'1'},
+				        	{name:'{exclusiveLimitSpeed}' ,value:'2'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{	
+			    	"prevWord"	:'{upSpeed}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'txBand1',
+				        "value"      : txBand,
+				        "checkDemoFunc" : ['checkNum','0','100000'] 
+				    },
+				},
+				{	
+			    	"prevWord"	:'{downSpeed}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'rxBand1',
+				        "value"      : rxBand,
+				        "checkDemoFunc" : ['checkNum','0','100000'] 
+				    },
+				}
+			];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputlist);
+			
+			/* 添加上下行后缀辅助选择框 */
+			$input.find('[name="txBand1"],[name="rxBand1"]').parent().attr('colspan','2').next().remove();
+			$input.find('[name="txBand1"],[name="rxBand1"]').after(' kbit/s <==');
+			
+			var selectarr = ["{noLimitSpeed}","{custom}","64K", "128K", "256K", "512K", "1M", "1.5M", "2M", "3M", "4M", "5M", "6M", "7M", "8M", "9M", "10M", "11M", "12M", "13M", "14M", "15M", "16M", "17M", "18M", "19M", "20M", "25M", "30M", "35M", "40M", "45M", "50M", "90M", "100M"];
+			var sevalue =   ["0","auto","64", "128", "256", "512", "1000", "1500", "2000", "3000", "4000", "5000", "6000", "7000", "8000", "9000", "10000", "11000", "12000", "13000", "14000", "15000", "16000", "17000", "18000", "19000", "20000", "25000", "30000", "35000", "40000", "45000", "50000", "90000", "100000"];
+			
+			var selehtml = '<select>'+
+								(function(){
+									var options = '';
+									selectarr.forEach(function(selobj,ins){
+										options += '<option data-local="'+selobj+'" value="'+sevalue[ins]+'">'+selobj+'</option>';
+									});
+									return options;
+								}())+
+							'</select>';
+							
+			var $sxselect = $(selehtml).change(function(){
+				var $s = $(this);
+				if($s.val().toString() !== 'auto'){
+					$input.find('[name="txBand1"]').val($s.val());
+				}
+			});
+			$input.find('[name="txBand1"]').parent().append($sxselect,tl('speedTip'));
+			$input.find('[name="txBand1"]').keyup(function(){
+				$sxselect.val('auto');
+			})
+			if($input.find('[name="txBand1"]').val() != '0'){
+				$sxselect.val('auto');
+			}
+			
+			var $xxselect = $(selehtml).change(function(){
+				var $s = $(this);
+				if($s.val().toString() !== 'auto'){
+					$input.find('[name="rxBand1"]').val($s.val());
+				}
+			});
+			$input.find('[name="rxBand1"]').parent().append($xxselect,tl('speedTip'));
+			$input.find('[name="rxBand1"]').keyup(function(){
+				$xxselect.val('auto');
+			})
+			
+			
+			
+			if($input.find('[name="rxBand1"]').val() != '0'){
+				$xxselect.val('auto');
+			}
+			
+			$tabcon.empty().append($input);
+			var tranDomArr = [$input];
+			var dicArr     = ['error','common','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);		
+		}
+		
+		/* 新增/编辑弹框保存方法 */
+		function editModalSave(type,checkSave,olddata){
+			var Tips = require('Tips');
+			
+			/* 如果为表格点击修改事件，跳过检测直接保存 */
+			if(checkSave){
+    			saveE();
+    			return false;
+    		}
+			
+			/* 阶梯 输入检测  */
+			var IG = require('InputGroup');
+			var $mamodal = DATA.tabModalObj.getDom();
+    		/* 阶梯检测保存方法 */
+    		var earr = ['#e1','#e3','#e4'];
+    		if(IG.checkErr($mamodal,true)>0){
+    			for(var i = 0;i<earr.length;i++){
+    				if(IG.checkErr($mamodal.find(earr[i]),true)>0){
+    					$mamodal.find('[href="'+earr[i]+'"]').trigger('click');
+    					return false;
+    				}
+    			}
+    		}
+    		saveE();
+    		
+    		/* 保存 */
+			function saveE(){
+				/*调用解析组件获取页面数据*/
+				var SRLZ = require('Serialize');
+				var strs = SRLZ.getQueryStrs(DATA.tabModalObj.getDom());
+				var jsons = SRLZ.queryStrsToJson(strs);
+				
+				/*根据加密方式 修改传往后台的变量*/
+				/*
+				if(jsons.encryType1 == 'WPA'){
+					jsons.wpaAuthMode1 = jsons.wpapskAuthMode1;
+					jsons.wpaCipher1 = jsons.wpapskCipher1;
+					jsons.wpapskAuthMode1 = '';
+					jsons.wpapskCipher1 = '';
+				}else if(jsons.encryType1 == 'WPAPSK'){
+					jsons.wpaAuthMode1 = '';
+					jsons.wpaCipher1 = '';
+				}else{
+					jsons.wpaAuthMode1 = '';
+					jsons.wpaCipher1 = '';
+					jsons.wpapskAuthMode1 = '';
+					jsons.wpapskCipher1 = '';
+				}
+				*/
+//				jsons.wpaAuthMode1 = jsons.wpapskAuthMode1;
+//				jsons.wpaCipher1 = jsons.wpapskCipher1;
+				console.log(jsons);
+				var newstrs = SRLZ.queryJsonToStr(jsons);
+				
+				/* 根据不同类型保存不同地址 
+				 * */
+				var savecount = {
+					s1 : false,
+					s2 : false
+				};
+				
+				
+				if(DATA.tabModalObj.getDom().find('[name="spjk"][value="fre2"]').is(':checked')){
+					savecount.s1 = '1';
+					if(DATA.tabModalObj.getDom().find('[name="spjk"][value="fre5"]').is(':checked')){
+						gosave(newstrs+'&mode='+DATA.saveG5.index,DATA.saveG2.goform,'s1');
+					}else{
+						gosave(newstrs+'&mode=-1',DATA.saveG2.goform,'s1');
+					}
+					
+				}else{
+					if(DATA.saveG2.ssid){
+						savecount.s1 = '1';
+						gosave('',DATA.saveG2.delgoform,'s1');
+					}
+				}
+				
+				if(DATA.tabModalObj.getDom().find('[name="spjk"][value="fre5"]').is(':checked')){
+					savecount.s2 = '1';
+					if(DATA.tabModalObj.getDom().find('[name="spjk"][value="fre2"]').is(':checked')){
+						gosave(newstrs+'&mode='+DATA.saveG2.index,DATA.saveG5.goform,'s2');
+					}else{
+						gosave(newstrs+'&mode=-1',DATA.saveG5.goform,'s2');
+					}
+				}else{
+					if(DATA.saveG5.ssid){
+						savecount.s2 = '1';
+						gosave('',DATA.saveG5.delgoform,'s2');
+					}
+				}
+				/* 等待框*/
+				var wt1 = Tips.showWaiting('{WaitForSaveConfig}');
+				
+				/* 延时监听ajax发送结果 */
+				settime();
+				function settime(){
+					setTimeout(function(){
+						if(savecount.s1 != false && savecount.s2 != false){
+							if(savecount.s1 != '1' && savecount.s2 != '1'){
+								wt1.remove();
+								if(savecount.s1 == 2 && savecount.s2 == 2){
+									Tips.showSuccess('{saveSuccess}');
+									DATA.tabModalObj.hide();
+									$('[href="#1"]').trigger('click');
+								}else{
+									Tips.showWarning((savecount.s1 == 2?savecount.s2:savecount.s1));
+								}
+							}else{
+								settime();
+							}
+						}else if(savecount.s1 != false && savecount.s2 == false){
+							if(savecount.s1 != '1'){
+								wt1.remove();
+								if(savecount.s1 == 2){
+									Tips.showSuccess('{saveSuccess}');
+									DATA.tabModalObj.hide();
+									$('[href="#1"]').trigger('click');
+								}else{
+									Tips.showWarning(savecount.s1);
+								}
+							}else{
+								settime();
+							}
+						}else if(savecount.s1 == false && savecount.s2 != false){
+							if(savecount.s2 != '1'){
+								wt1.remove();
+								if(savecount.s2 == 2){
+									Tips.showSuccess('{saveSuccess}');
+									DATA.tabModalObj.hide();
+									$('[href="#1"]').trigger('click');
+								}else{
+									Tips.showWarning(savecount.s2);
+								}
+							}else{
+								settime();
+							}
+						}
+					},500);
+				}
+				
+				
+				/* 单个保存 */
+				function gosave(str,url,prop){
+					$.ajax({
+						url:'/goform/'+url,
+						type:'post',
+						data:(type=="add"?str+'&Action=add':str),
+						success:function(result){
+								var doEval = require('Eval');
+								var codeStr = result,
+									variableArr = ['status', 'errorstr'],
+									result = doEval.doEval(codeStr, variableArr),
+									isSuccess = result["isSuccessful"];
+								// 判断代码字符串执行是否成功
+								if (isSuccess) {
+									var data = result["data"],
+										status = data['status'];
+										errorstr = data['errorstr'];
+									if (status) {
+										// 显示成功信息
+//										Tips.showSuccess('{saveSuccess}');
+//										DATA.tabModalObj.hide();
+//										$('[href="#1"]').trigger('click');
+										savecount[prop] = 2;
+									} else {
+										if(errorstr!=""){
+											savecount[prop] = errorstr;
+//											Tips.showWarning(errorstr);
+										}else{
+											savecount[prop] = '{saveFail}';
+//											Tips.showError('{saveFail}');
+										}
+										
+										if(checkSave){
+											$('[href="#1"]').trigger('click');
+										}
+									}
+								} else {
+									Tips.showWarning('{parseStrErr}');
+									if(checkSave){
+											$('[href="#1"]').trigger('click');
+										}
+								}					
+						}
+					});
+				}
+				
+					
+			}
+		}
+		
+		/*  */
+		
+		
+		
+		/* VLAN ID 新增弹框 */
+		function addVLANTab($VLANIDselect){
+			
+			 var canSelectSSID = [];
+	        /*数组去重*/
+	       	var nowSSIDselect = [];
+	        DATA.selectSsid.forEach(function(obj,i){
+	        	if(nowSSIDselect.indexOf(obj)<0){
+	        		nowSSIDselect.push(obj);
+	        	}
+	        	
+	        })
+	        nowSSIDselect.forEach(function(obj,i){
+	        	canSelectSSID.push({name:obj,value:obj});
+	        })
+			
+			var modallist = {
+				id:'addVLAN_modal',
+				title:tl("add"),
+				size:'normal',
+				"btns" : [
+		            {
+		                "type"      : 'save',
+		                "clickFunc" : function($this){
+		                	if(require('InputGroup').checkErr(DATA.tabVLANModalObj.getDom())>0){
+		                		return ;
+		                	}
+		                	if(DATA.tabVLANModalObj.getDom().find('[name="ssidArr"]:checked').length == 0){
+								Tips.showWarning('{一个SSID都没勾}');
+								return ;
+							}
+	                		var Serialize = require('Serialize');
+	                		var quryarrs = Serialize.getQueryArrs(DATA.tabVLANModalObj.getDom());
+                			var qjson = Serialize.queryArrsToJson(quryarrs);
+                			
+                			var $modal = DATA.tabVLANModalObj.getDom();
+							
+							var $selectSSID = $modal.find('[name="ssidArr"]:checked');
+					//		if($selectSSID.length == 0){
+					//			tips.showWarning('{一个SSID都没选}');
+					//			return;
+					//		}
+							var newjson = {};
+							var _index = 1;
+							$selectSSID.each(function(){
+								var _v = $(this).val();
+								newjson['ssid'+_index] =  _v;
+								_index++;
+							});
+							console.log(qjson);
+							newjson.wirelessName = qjson.lanIpName;
+							newjson.oldWirelessName = '';
+							newjson.wirelessIp = qjson.lanIp;
+							newjson.wirelessNm = qjson.lanNetmask;
+							newjson.action = 'add';
+							var queryStr = require('Serialize').queryJsonToStr(newjson);
+							
+							// 向后台发送数据，进行新增操作
+							$.ajax({
+								url: '/goform/WirelessInterface',
+								type: 'POST',
+								data: queryStr,
+								success: function(result) {
+									//console.log(result);
+									// 执行返回的JS代码
+									var doEval = require('Eval');
+									var codeStr = result,
+										variableArr = ['status', 'errorstr'];
+									var result = doEval.doEval(codeStr, variableArr);
+									var isSuccess = result["isSuccessful"];
+									// 判断代码字符串执行是否成功
+									if (isSuccess) {
+										var data = result["data"];
+										var isSuccessful = data["status"];
+										// 判断修改是否成功
+										if (isSuccessful) {
+											// 显示成功信息
+											Tips.showSuccess('{saveSuccess}');
+											// 刷新页面
+											// var Dispatcher = require('Dispatcher');
+											// Dispatcher.reload(0.5);
+											DATA.tabVLANModalObj.hide();
+											var $opt = $('<option value="'+newjson.wirelessName+'">'+newjson.wirelessName+'</option>');	
+											$VLANIDselect.append($opt);
+											$VLANIDselect.find('option[value="'+newjson.wirelessName+'"]').attr('selected','selected');
+											DATA.wirelessName.append(newjson.wirelessName);
+										} else {
+											var errorstr=data.errorstr;
+											if(errorstr == ''||errorstr == undefined||errorstr == 'undefined'){
+												Tips.showWarning('{saveFail}');
+											}else{
+												Tips.showWarning(errorstr);
+											}
+										}
+									} else {
+										Tips.showError('{parseStrErr}');
+									}
+								}
+							});
+							
+						
+							
+								
+								
+								
+							
+		                }
+		            },
+		            {
+		                "type"      : 'reset',
+		            },
+		            {
+		                "type"      : 'close'
+		            }
+		        ]
+			};
+			var Modal = require('Modal');
+			var modalObj = Modal.getModalObj(modallist);
+			DATA.tabVLANModalObj = modalObj;
+			
+			// 模态框中输入框组的配置数据
+			var inputList = [	
+			 {
+			 	"necessary": true,
+				"prevWord": '{name}',
+				"inputData": {
+					"type": 'text',
+					"name": 'lanIpName',
+					"checkDemoFunc": ['checkInput', 'name', '1', '31', '3']
+				},
+				"afterWord": ''
+			}, {
+				"necessary": true,
+				"prevWord": '{ip}',
+				"inputData": {
+					"type": 'text',
+					"name": 'lanIp',
+					"checkFuncs" : ['checkIP']
+					//"errorStr": 'IP地址错误'
+				},
+				"afterWord": ''
+			}, {
+				"necessary": true,
+				"prevWord": '{netmask}',
+				"inputData": {
+					"type": 'text',
+					"name": 'lanNetmask',
+					'value': '255.255.255.0',
+					"checkFuncs" : ['re_checkMask']
+					//"errorStr": '子网掩码错误'
+				},
+				"afterWord": ''
+			}, {
+				"prevWord": '{WiFi 接口}',
+//				"disabled": disabled,
+				"inputData": {
+					"type": 'checkbox',
+					"name": 'ssidArr',
+					"defaultValue": [],
+					items:canSelectSSID
+				},
+				"afterWord": ''
+		}];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputList);
+
+			// 添加跳转到dhcp页面链接
+			var $div = $('<div style="font-weight: bold;margin-top:5px; word-break: normal; white-space: normal; padding: 10px; background-color: rgb(238, 238, 238);width:100%"></div>')
+			
+			var $span1 = $("<span data-local='{newVLANIDWithoutDHCP1}'>{newVLANIDWithoutDHCP1}</span>");
+			var $linkToOrg = $('<a data-local="{linkToDHCP}" class="u-inputLink">{linkToDHCP}</a>');
+			var $span2 = $("<span data-local='{newVLANIDWithoutDHCP2}'>{newVLANIDWithoutDHCP2}</span>");
+			$div.append($span1,$linkToOrg,$span2);
+//			$linkToOrg.hover(function(){
+//				$(this).css('opacity','1');
+//			},function(){
+//				$(this).css('opacity','0.5');
+//			})
+			$linkToOrg.click(function(){
+				Tips.showConfirm(
+					tl('noSaveAndGoRightnow')
+					,function(){
+						modalObj.hide();
+						DATA.tabModalObj.hide();
+						$('#sidebar').find('a[href="#/network_config/DHCP_server"]').parent().trigger('click');
+						$('#sidebar').find('a[href="#/network_config/DHCP_server"]').parent().parent().prev().trigger('click');
+					},function(){
+						
+					})
+				
+			}).css({
+				'margin-right':'0px'
+			});
+			
+			
+			modalObj.insert($input);
+			modalObj.insert($div);
+			var $tabmod = modalObj.getDom();
+			var tranDomArr = [$input,$tabmod];
+			var dicArr     = ['common' ,'lanConfig','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);
+			modalObj.show();
+		}
+		
+		/* 地址池 新增弹框 */
+		function addDZCTab($DZCselect,$VLANselect){
+			var modallist = {
+				id:'addDZC_modal',
+				title:'{addPoolAddr}',
+				size:'normal',
+				"btns" : [
+		            {
+		                "type"      : 'save',
+		                "clickFunc" : function($this){
+		                	if(require('InputGroup').checkErr(DATA.tabDZCModalObj.getDom())<=0){
+		                		var srlz = require('Serialize');
+		                		var quryarrs = srlz.getQueryArrs(DATA.tabDZCModalObj.getDom());
+	                			var data = srlz.queryArrsToJson(quryarrs);
+		                		
+		                		$DZCselect.append('<option value="'+data.name+'" selected="selected">'+data.name+'</option>');
+		                		DATA.tabDZCModalObj.hide();
+		                	}
+		                }
+		            },
+		            {
+		                "type"      : 'reset',
+		            },
+		            {
+		                "type"      : 'close'
+		            }
+		        ]
+			};
+			var Modal = require('Modal');
+			var modalObj = Modal.getModalObj(modallist);
+			DATA.tabDZCModalObj = modalObj;
+			
+			var valnIDItems = [];
+			var vlanDefaultValue = '';
+			$VLANselect.children().each(function(){
+				var $cd = $(this);
+				valnIDItems.push({name:$cd.text(),value:$cd.attr('value')});
+				if($cd.is(':selected')){
+					vlanDefaultValue = $cd.attr('value');
+				}
+			});
+			
+			
+			var inputlist = [
+				{
+					necessary   : true,
+			    	"prevWord"	:'{poolName}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'name',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+			    	"prevWord"	:'{poolStatus}',
+				    "inputData" : {
+				        "type"       : 'radio',
+				        "name"       : 'state',
+				        "defaultValue" : 'on',
+				        items:[
+				        	{name:'{open}' ,value:'on'},
+				        	{name:'{close}' ,value:'off'}
+				        ]
+				    },
+				    "afterWord": ''
+				},
+				{
+			    	"prevWord"	:'VLAN ID',
+			    	disabled    : true,
+				    "inputData" : {
+				        "type"       : 'select',
+				        "name"       : 'VALNID',
+				        "defaultValue" :vlanDefaultValue,
+				         items: valnIDItems
+				    },
+				    "afterWord": ''
+				},
+				
+				{
+					necessary   : true,
+			    	"prevWord"	:'{beginIp}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'startIP',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{endIp}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'endIP',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{netmask}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'mask',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{GwAddr}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'gatewayAddress',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{leaseTime}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'rentTime',
+				        "value" : ''
+				    },
+				    "afterWord": '{seconds}'
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{firstDNS}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'mainDNS',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				},
+				{
+					necessary   : true,
+			    	"prevWord"	:'{secDns}',
+				    "inputData" : {
+				        "type"       : 'text',
+				        "name"       : 'spareDNS',
+				        "value" : ''
+				    },
+				    "afterWord": ''
+				}
+			];
+			var InputGroup = require('InputGroup');
+			var $input = InputGroup.getDom(inputlist);
+			modalObj.insert($input);
+			var $tabmod = modalObj.getDom();
+			var tranDomArr = [$input,$tabmod];
+			var dicArr     = ['error','common','doRouterConfig','doNetName'];
+			require('Translate').translate(tranDomArr, dicArr);
+			modalObj.show();
+		}
+		
+	
+	}
+	
+	  
+	module.exports = {
+		display: display
+	};
+});

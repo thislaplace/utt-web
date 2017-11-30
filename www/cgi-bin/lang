@@ -1,0 +1,4 @@
+#!/usr/bin/lua
+io.write("Content-type: text/html\n\n")
+local str = 'var lang = "zhcn";isMacChange = 1;status = 1;var langArr=Array(); langArr[0]="en"; langArr[1]="zhcn";'
+io.write(str)

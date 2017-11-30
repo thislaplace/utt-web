@@ -1,0 +1,95 @@
+#!/usr/bin/lua
+require "APCommon"
+require "APState"
+require "luci.http"
+
+function uci_get(str)
+	return string.sub(exec("uci get wireless." .. str), 1, -2)
+end
+
+io.write("Content-type: text/html\n\n")
+
+local str = ' var ssid = new Array(); var limit_type = new Array(); var limit_down = new Array(); var limit_up = new Array(); var LanWlanSep = new Array(); var multi_ssidSep = new Array(); var encodeType = new Array(); var broadcastEnables = new Array(); var AuthModes = new Array(); var wpaCiphers = new Array(); var radiusIPs = new Array(); var radiusPorts = new Array(); var radiusPsswds = new Array(); var keyUpdateCycs = new Array(); var wpapskCiphers = new Array(); var pskPsswds = new Array(); var pskkeyUpdateCycs = new Array(); var modes = new Array(); var keyFormats = new Array(); var keyLength1s = new Array(); var keyLength2s = new Array(); var keyLength3s = new Array(); var keyLength4s = new Array(); var wepkey1s = new Array(); var wepkey2s = new Array(); var wepkey3s = new Array(); var wepkey4s = new Array(); var keynums = new Array(); var ifName= new Array(); var wlan_lan_dhcpEn = new Array(); var multi_ssid_dhcpEn = new Array(); var goform = new Array(); var delgoform = new Array();'
+
+local str = str .. 'var wirelessName = new Array(); var wirelessIp = new Array(); var wirelessNm = new Array(); var wirelessSsid = new Array(); var selectSsid = new Array();'
+
+os.execute("iwconfig | grep \"ath0\" | grep ESSID | awk \'{print $4}\' >/tmp/ssid")
+os.execute("iwconfig | grep \"ath1\" | grep ESSID | awk \'{print $4}\' >/tmp/ssid_5")       
+ssid2_num = exec("cat /tmp/ssid | wc -l")
+ssid5_num = exec("cat /tmp/ssid_5 | wc -l")
+
+str = str .. string.format("var SSIDNUM=%d;", MAX24SSIDNUM + MAX5SSIDNUM)
+
+if RF24INFO == 1 and RF5INFO ~= 1 then
+	str = str .. string.format("var ssidSupport='2';")
+elseif RF24INFO ~= 1 and RF5INFO == 1 then
+	str = str .. string.format("var ssidSupport='2';")
+elseif RF24INFO == 1 and RF5INFO == 1 then
+	str = str .. string.format("var ssidSupport='2255';")
+end
+
+for i=0, ssid2_num-1 do
+	str = str .. string.format("selectSsid[%d] = \"%s\";", i, uci_get("24g" .. i ..".ssid"))
+	str = str .. string.format("ssid[%d] = \"%s\";", i, uci_get("24g" .. i ..".ssid"))
+	str = str .. string.format("limit_type[%d] = \"%s\";", i, uci_get("24g" .. i ..".RatelimitMode"))
+	str = str .. string.format("limit_down[%d] = \"%s\";", i, uci_get("24g" .. i ..".Downrate"))
+	str = str .. string.format("limit_up[%d] = \"%s\";", i, uci_get("24g" .. i ..".Uprate"))
+	str = str .. string.format("LanWlanSep[%d] = 0;", i)--有线隔离
+	str = str .. string.format("multi_ssidSep[%d] = \"%s\";", i, uci_get("24g" .. i ..".isolate"))
+	str = str .. string.format("encodeType[%d] = \"%s\";", i, uci_get("24g" .. i ..".encode"))
+	str = str .. string.format("broadcastEnables[%d] = \"%s\";", i, uci_get("24g" .. i ..".hidden"))
+	str = str .. string.format("AuthModes[%d] = \"%s\";", i, uci_get("24g" .. i ..".authmode"))
+	str = str .. string.format("wpaCiphers[%d] = \"\";", i)
+	str = str .. string.format("radiusPorts[%d] = \"%s\";", i, uci_get("24g" .. i ..".radius"))
+	str = str .. string.format("keyUpdateCycs[%d] = \"%s\";", i, uci_get("24g" .. i ..".keyUpdateCycs"))
+	str = str .. string.format("wpapskCiphers[%d] = \"%s\";", i, uci_get("24g" .. i ..".wpapskCiphers"))
+	str = str .. string.format("pskPsswds[%d] = \"%s\";", i, uci_get("24g" .. i ..".key"))
+	str = str .. string.format("pskkeyUpdateCycs[%d] = \"%s\";", i, uci_get("24g" .. i ..".pskkeyUpdateCycs"))
+	str = str .. string.format("modes[%d] = 1;", i)--配对标识
+	str = str .. string.format("keyFormats[%d] = \"%s\";", i, uci_get("24g" .. i ..".key"))
+	str = str .. string.format("keyLength1s[%d] = \"%s\";", i, uci_get("24g" .. i ..".key1"))
+	str = str .. string.format("keyLength2s[%d] = \"%s\";", i, uci_get("24g" .. i ..".key2"))
+	str = str .. string.format("keyLength3s[%d] = \"%s\";", i, uci_get("24g" .. i ..".key3"))
+	str = str .. string.format("keyLength4s[%d] = \"%s\";", i, uci_get("24g" .. i ..".key4"))
+	str = str .. string.format("keynums[%d] = \"%s\";", i, uci_get("24g" .. i .. ".keynums"))
+	str = str .. string.format("ifName[%d] = \"%s\";", i, uci_get("24g" .. i ..".ifName"))
+	str = str .. string.format("wlan_lan_dhcpEn[%d] = \"%s\";", i, uci_get("24g" .. i ..".wlan_lan_dhcpEn"))
+	str = str .. string.format("multi_ssid_dhcpEn[%d] = \"%s\";", i, uci_get("24g" .. i ..".msd"))
+	str = str .. string.format("goform[%d] = \"newSsid\";", i)
+	str = str .. string.format("delgoform[%d] = \"%s\";", i, uci_get("24g" .. i ..".key"))
+end
+
+local index = ssid2_num
+for i=0, ssid5_num-1 do
+	str = str .. string.format("selectSsid[%d] = \"%s\";", index, uci_get("5g" .. i ..".ssid"))
+	str = str .. string.format("ssid[%d] = \"%s\";", index, uci_get("5g" .. i ..".ssid"))
+	str = str .. string.format("limit_type[%d] = \"%s\";", index, uci_get("5g" .. i ..".RatelimitMode"))
+	str = str .. string.format("limit_down[%d] = \"%s\";", index, uci_get("5g" .. i ..".Downrate"))
+	str = str .. string.format("limit_up[%d] = \"%s\";", index, uci_get("5g" .. i ..".Uprate"))
+	str = str .. string.format("LanWlanSep[%d] = 0;", index)--有线隔离
+	str = str .. string.format("multi_ssidSep[%d] = \"%s\";", index, uci_get("5g" .. i ..".isolate"))
+	str = str .. string.format("encodeType[%d] = \"%s\";", index, uci_get("5g" .. i ..".encode"))
+	str = str .. string.format("broadcastEnables[%d] = \"%s\";", index, uci_get("5g" .. i ..".hidden"))
+	str = str .. string.format("AuthModes[%d] = \"%s\";", index, uci_get("5g" .. i ..".authmode"))
+	str = str .. string.format("wpaCiphers[%d] = \"\";", index)
+	str = str .. string.format("radiusPorts[%d] = \"%s\";", index, uci_get("5g" .. i ..".radius"))
+	str = str .. string.format("keyUpdateCycs[%d] = \"%s\";", index, uci_get("5g" .. i ..".keyUpdateCycs"))
+	str = str .. string.format("wpapskCiphers[%d] = \"%s\";", index, uci_get("5g" .. i ..".wpapskCiphers"))
+	str = str .. string.format("pskPsswds[%d] = \"%s\";", index, uci_get("5g" .. i ..".key"))
+	str = str .. string.format("pskkeyUpdateCycs[%d] = \"%s\";", index, uci_get("5g" .. i ..".pskkeyUpdateCycs"))
+	str = str .. string.format("modes[%d] = 1;", index)--配对标识
+	str = str .. string.format("keyFormats[%d] = \"%s\";", index, uci_get("5g" .. i ..".key"))
+	str = str .. string.format("keyLength1s[%d] = \"%s\";", index, uci_get("5g" .. i ..".key1"))
+	str = str .. string.format("keyLength2s[%d] = \"%s\";", index, uci_get("5g" .. i ..".key2"))
+	str = str .. string.format("keyLength3s[%d] = \"%s\";", index, uci_get("5g" .. i ..".key3"))
+	str = str .. string.format("keyLength4s[%d] = \"%s\";", index, uci_get("5g" .. i ..".key4"))
+	str = str .. string.format("keynums[%d] = \"%s\";", index, uci_get("5g" .. i .. ".keynums"))
+	str = str .. string.format("ifName[%d] = \"%s\";", index, uci_get("5g" .. i ..".ifName"))
+	str = str .. string.format("wlan_lan_dhcpEn[%d] = \"%s\";", index, uci_get("5g" .. i ..".wlan_lan_dhcpEn"))
+	str = str .. string.format("multi_ssid_dhcpEn[%d] = \"%s\";", index, uci_get("5g" .. i ..".msd"))
+	str = str .. string.format("goform[%d] = \"%s\";", index, uci_get("5g" .. i ..".key"))
+	str = str .. string.format("delgoform[%d] = \"newSsid\";", index)
+	index = index + 1
+end
+
+io.write(str)

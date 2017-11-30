@@ -1,0 +1,2 @@
+/*TMODJS:{"version":1,"md5":"4b12df03892d3672f408b3eb962c21a4"}*/
+define(function(require){return require("../../template")("common/inputs/link",function(a){"use strict";var b=this,c=(b.$helpers,a.display),d=a.sign,e=b.$escape,f=b.$each,g=a.linkList,h=(a.value,a.index,"");return h+="<tr ",c||(h+='class="u-hide"'),h+=" ",""!=d&&(h+='data-control="',h+=e(d),h+='"'),h+='> <td colspan="3"> ',f(g,function(a){h+=' <a class="u-inputLink" id="',h+=e(a.id),h+='" data-local="',h+=e(a.name),h+='">',h+=e(a.name),h+="</a> "}),h+=" </td> </tr>",new String(h)})});
