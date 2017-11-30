@@ -9,6 +9,36 @@ define(function(require, exports, module){
 	};
 
 	function showWidget($container){
+        var DATA = {}
+        $.ajax({
+            url: '/cgi-bin/luci/admin/lan_wirelessInterface',
+            type: 'GET',
+            async:false,
+            success: function(result) {
+                result = JSON.parse(result);
+                console.log(result)
+
+                var doEval = require('Eval');
+                var Tips = require('Tips');
+                var variableArr = ['type', 'dns', 'lanIp', 'netMask', 'gateway', 'lanMac',];
+                var code = doEval.doEval(result, variableArr),
+                    isSuccessful = code["isSuccessful"];
+                if (isSuccessful) {
+                    var data = code["data"];
+                    DATA.type  = data.type;
+                    DATA.dns   = data.dns;
+                    DATA.lanIp   = data.lanIp;
+                    DATA.netMask = data.netMask;
+                    DATA.gateway = data.gateway;
+                    DATA.lanMac  = data.lanMac;
+                } 
+                else 
+                {
+                    Tips.showError('{parseStrErr}',3);
+                }
+
+            }
+        });
 		var InputGroup = require('InputGroup');
 		var inputList = [
 			{
@@ -16,6 +46,7 @@ define(function(require, exports, module){
 				"inputData" : {
 					"type" : 'text',
 					"name" : 'mac',
+                    value:DATA.lanMac,
 				},
 				"afterword" : ''
 			},
@@ -24,6 +55,7 @@ define(function(require, exports, module){
 				"inputData" : {
 					"type" : 'text',
 					"name" : 'ipAddress',
+                    value:DATA.lanIp,
 				},
 				"afterword" : ''
 			},
@@ -32,6 +64,7 @@ define(function(require, exports, module){
 				"inputData" : {
 					"type" : 'text',
 					"name" : 'Subnet',
+                    value:DATA.netMask,
 				},
 				"afterword" : ''
 			},
@@ -40,30 +73,17 @@ define(function(require, exports, module){
 				"inputData" : {
 					"type" : 'text',
 					"name" : 'defaultGateway',
+                    value:DATA.gateway,
 				},
 				"afterword" : ''
 			},
 			{
-				"prevWord" : '主DNS服务器',
+				"prevWord" : 'DNS服务器',
 				"inputData" : {
 					"type" : 'text',
 					"name" : 'DNS',
-				},
-				"afterword" : ''
-			},
-			{
-				"prevWord" : '备DNS服务器',
-				"inputData" : {
-					"type" : 'text',
-					"name" : 'DNSbackups',
-				},
-				"afterword" : ''
-			},
-			{
-				"prevWord" : 'AC地址',
-				"inputData" : {
-					"type" : 'text',
-					"name" : 'AC',
+                    value:DATA.dns,
+                    "board":"none",
 				},
 				"afterword" : ''
 			},
@@ -71,18 +91,10 @@ define(function(require, exports, module){
 		];
 		var $inputGroup = InputGroup.getDom(inputList);
 			$input=$inputGroup
-			$input.find('[name="mac"]').after("<span>FC:2F:EF:55:ff:aa</span>")
-			$input.find('[name="ipAddress"]').after("<span>192.168.1.1</span>")
-			$input.find('[name="Subnet"]').after("<span>255.255.255.0</span>")
-			$input.find('[name="defaultGateway"]').after("<span>0.0.0.0</span>")
-			$input.find('[name="DNS"]').after("<span>0.0.0.0</span>")
-			$input.find('[name="DNSbackups"]').after("<span>0.0.0.0</span>")
-			$input.find('[name="AC"]').after("<span>192.168.1.252         0.0.0.0        0.0.0.0</span>")
-			$input.find('[name="mac"],[name="ipAddress"],[name="Subnet"],[name="defaultGateway"],[name="DNS"],[name="DNSbackups"],[name="AC"]').remove()
-
-			$input.css({'padding-top':'2em'})
-			$input.find("tr").css({"line-height":"30px"})
-			return $inputGroup
+			$input.css({'padding-top':'5em'});
+			$input.find("tr").css({"line-height":"30px"});
+			$input.find("[type=text]").attr('disabled', true);
+			return $inputGroup;
 	}
 	function displayTable($container) {
 		var TableContainer = require('P_template/common/TableContainer');

@@ -24,9 +24,10 @@ local http = require("luci.http")
 --
 local SF = string.format
 local OE = os.execute
+local SS = string.sub
 
 function uci_get_wireless(ifName, name)
-    return string.sub(exec("uci get wireless." .. ifName .. "." .. name), 1, -2)
+    return SS(exec("uci get wireless." .. ifName .. "." .. name), 1, -2)
 end
 
 
@@ -61,6 +62,11 @@ function index()
     entry({"admin", "wireless_rfconfig"}, call("set_rf_info"), _(""), 90)
     entry({"admin", "lan_wirelessInterface"}, call("get_lan_info"), _(""), 90)
     entry({"admin", "set_lan_config"}, call("set_lan_config"), _(""), 90)
+    entry({"admin", "fastConfigPop"}, call("fastConfigPop"), _(""), 90)
+    entry({"admin", "fastConfigNet"}, call("fastConfigNet"), _(""), 90)
+    entry({"admin", "setFastConfPop"}, call("setfastConfigPop"), _(""), 90)
+    entry({"admin", "system_state"}, call("system_state"), _(""), 90)
+    entry({"admin", "dhcpClient"}, call("dhcpClient"), _(""), 90)
 end
 
 
@@ -240,10 +246,11 @@ function add_new_wifi()
         uci_set_wireless("disabled", 0, interface)
     end
 
-    OE("uci commit && wifi& >/dev/null 2>&1")
+    OE("uci commit wireless >/dev/null 2>&1")
+    OE("wifi >/dev/null 2>&1")
 
-    result = "var status = 1; var errorstr = \"\";"
-    http.write_json(result)
+    local str = "var status = \"1\"; var errorstr = \"\";"
+    http.write_json(str)
 end
 
 
@@ -302,17 +309,20 @@ function set_rf_info()
         uci_set_wireless(k, v, "wifi1")
     end
 
-    OE("uci commit wireless")
+    OE("uci commit wireless >/dev/null 2>&1")
+    OE("wifi >/dev/null 2>&1")
+    local str = "var status = \"1\"; var errorstr = \"\";"
+    http.write_json(str)
 end
 
 
 function get_lan_info()
-    local _type   = string.sub(exec("uci get network.lan.proto"), 1, -2)
-    local lanIp   = string.sub(exec("ifconfig br-lan | grep \"inet addr\" | awk '{print $2}'"),6, -2)
-    local netMask = string.sub(exec("ifconfig br-lan | grep \"inet addr\" | awk '{print $4}'"),6, -2)
-    local gateway = string.sub(exec("route | grep default | awk '{print $2}'"), 1, -2)
-    local dns     = string.sub(exec("cat /etc/resolv.conf | grep nameserver | awk '{print $2}'"), 1, -2)
-    local lanMac  = string.sub(exec("ifconfig br-lan | grep HWaddr | awk '{print $5}'"), 1, -2)
+    local _type   = SS(exec("uci get network.lan.proto"), 1, -2)
+    local lanIp   = SS(exec("ifconfig br-lan | grep \"inet addr\" | awk '{print $2}'"),6, -2)
+    local netMask = SS(exec("ifconfig br-lan | grep \"inet addr\" | awk '{print $4}'"),6, -2)
+    local gateway = SS(exec("route | grep default | awk '{print $2}'"), 1, -2)
+    local dns     = SS(exec("cat /etc/resolv.conf | grep nameserver | awk 'NR==1 {print $2}'"), 1, -2)
+    local lanMac  = SS(exec("ifconfig br-lan | grep HWaddr | awk '{print $5}'"), 1, -2)
 
     local str = ""
     str = str .. SF("var type  = \"%s\";", _type)
@@ -346,4 +356,54 @@ function set_lan_config()
 
     OE("uci commit network >/dev/null 2>&1")
     OE("/etc/init.d/network restart >/dev/null 2>&1")
+    local str = "var status = \"1\"; var errorstr = \"\";"
+    http.write_json(str)
+end
+
+
+function fastConfigPop()
+    local notPopUps = SS(exec("uci get APConfig.ap.notPopUps"), 1, -2)
+    if notPopUps == "" then notPopUps = '0' end
+    local str = SF("var notPopUps=\"%s\";", notPopUps)
+    http.write_json(str)
+end
+
+
+function fastConfigNet()
+    get_lan_info()
+    --http.write_json(str)
+end
+
+
+function setfastConfigPop()
+    local notPopUps = http.formvalue("notPopUp") 
+    OE("uci set APConfig.ap.notPopUps=" .. notPopUps .. ">/dev/null 2>&1")
+    OE("uci commit >/dev/null 2>&1")
+    local str = "var status = \"1\"; var errorstr = \"\";"
+    http.write_json(str)
+end
+
+
+function system_state()
+    local str  = ""
+    local time = os.date('%Y-%m-%d %H:%M:%S')
+    local d = exec("cat /proc/uptime | awk -F. '{d=$1 / 86400; printf(\"%d\", d)}'")     
+    local h = exec("cat /proc/uptime | awk -F. '{h=($1 % 86400)/3600; printf(\"%d\", h)}'")
+    local m = exec("cat /proc/uptime | awk -F. '{m=($1 % 3600)/60; printf(\"%d\", m)}'")
+    local s = exec("cat /proc/uptime | awk -F. '{s=($1 % 60); printf(\"%d\", s)}'")
+
+    str = str .. SF("var systemTime=\"%s\";", time)
+    str = str .. SF("var d = \"%s\";", d)
+    str = str .. SF("var h = \"%s\";", h)
+    str = str .. SF("var m = \"%s\";", m)
+    str = str .. SF("var s = \"%s\";", s)
+    str = str .. SF("var serialNumber=\"%s\";", SN)
+    str = str .. SF("var product=\"%s\";", MODEL)
+    str = str .. SF("var hardware=\"%s\";", HWVERSION)
+    str = str .. SF("var software=\"%s\";", SWVERSION)
+    http.write_json(str)
+end
+
+
+function dhcpClient()
 end

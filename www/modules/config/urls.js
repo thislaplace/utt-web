@@ -149,12 +149,12 @@ define({
 			"func"  : doLANConfig
 		},
 		// DHCP服务
-		"DHCPServer" : {
-			"menu"  : "network",
-			"title" : "DHCP服务",
-			"link"  : "/DHCP_server",
-			"func"  : doDHCPServer
-		},
+		//"DHCPServer" : {
+		//	"menu"  : "network",
+		//	"title" : "DHCP服务",
+		//	"link"  : "/DHCP_server",
+		//	"func"  : doDHCPServer
+		//},
 		// 端口映射
 		// "portMapping" : {
 		// 	"menu"  : "network",
