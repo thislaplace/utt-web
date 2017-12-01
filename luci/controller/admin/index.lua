@@ -411,7 +411,12 @@ end
 function clockManage()
     local str = ""
     --openwrt 有点奇怪，这里对时区要做相反数处理，如果有人找到问题原因，请把这个坑填了
-    local Timezones = tostring(-tonumber(SS(exec("cat /etc/TZ"), 4, -2)))
+    local Timezones = SS(exec("cat /etc/TZ"), 4, -2)
+    if Timezones == "" then
+        Timezones = "0"
+    else
+        Timezones = tostring(-tonumber(Timezones))
+    end
 
     local server1 = SS(exec("uci get system.ntp.server | awk '{print $1}'"), 3, -2)
     local server2 = SS(exec("uci get system.ntp.server | awk '{print $2}'"), 3, -2)
@@ -476,22 +481,22 @@ end
 
 
 function UpdateFirmware()
-	local fp
-	luci.http.setfilehandler(
-		function(meta, chunk, eof)
-			if not fp then
-				if meta and meta.name == "image" then
-					fp = io.open(image_tmp, "w")
-				else
-					fp = io.popen(restore_cmd, "w")
-				end
-			end
-			if chunk then
-				fp:write(chunk)
-			end
-			if eof then
-				fp:close()
-			end
-		end
-	)
+    local fp
+    luci.http.setfilehandler(
+    function(meta, chunk, eof)
+        if not fp then
+            if meta and meta.name == "image" then
+                fp = io.open(image_tmp, "w")
+            else
+                fp = io.popen(restore_cmd, "w")
+            end
+        end
+        if chunk then
+            fp:write(chunk)
+        end
+        if eof then
+            fp:close()
+        end
+    end
+    )
 end

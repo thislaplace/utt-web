@@ -25,10 +25,7 @@ define(function(require, exports, module){
             url:"/cgi-bin/luci/admin/WirelessInterface",
             success:function(result){
                 result = JSON.parse(result)
-                // 数据处理
-                console.log(result);
                 processData(result);
-                //生成表格
                 makeTable($tableConDom);
                 $tableConDom.empty().append(DATA["tableObj"].getDom());
             }
@@ -63,25 +60,30 @@ define(function(require, exports, module){
     function getbase(data,isShow){		
         var Database = require('Database'),
             database = Database.getDatabaseObj(); // 数据库的引用
-        // 声明字段列表，再加字段，注释必须对齐，不对齐去吃屎。
+        // 声明字段列表，再加字段，注释必须对齐
         var fieldArr =[
             'ID',
             'radio_type',
-            'wIndex_24',				               // ssid编号，唯一标识ssid的东西
+            'wIndex_24',				       // ssid编号，唯一标识ssid的东西
             'wIndex_5',
             'ssid',                            // ssid的名称
             'sta_rate_policy',	               // 限速策略		（1：共享    2：独享）	
-            'sta_rate_down',	                 // 下行带宽
+            'sta_rate_down',	               // 下行带宽
             'sta_rate_up',	                   // 上行带宽
             'rate_limit_show',                 // 用于把限速数据综合显示在页面上
             'isolate',	                       // 无线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
-            'encode',	                         // 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
-            'hidde',						               // 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
-            'encryption',				               // 加密类型
+            'encode',	                       // 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
+            'hidde',						   // 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
+            'encryption',				       // 加密类型
             'psk_algorithm',                   // 加密算法             
             'psk_wpa_version',                 // psk加密的wpa版本
-            'wep_authentication_type',				 // wep认证类型
-            'key',							               // 密钥
+            'wep_authentication_type',		   // wep认证类型
+            'pssword',						   // 密钥
+            'key',
+            'key1',
+            'key2',
+            'key3',
+            'key4',
         ];
 
         var baseData = [];
@@ -112,6 +114,11 @@ define(function(require, exports, module){
                 getPskWpaVersion(data, i),
                 getAuthType(data, i),
                 getShowPswd(data,i),
+                data.key,
+                data.key1,
+                data.key2,
+                data.key3,
+                data.key4,
             ]);
             j++;
         }
@@ -121,19 +128,31 @@ define(function(require, exports, module){
         database.addData(baseData);
         return database;
     }
+
+
     /* 密码显示 */
     function getShowPswd(data,i){
         var pswd = '';
         if(data.key[i] == 1)
             pswd = data.key1[i];
         else if(data.key[i] == 2)
-            pswd = data.key1[i];
+            pswd = data.key2[i];
         else if(data.key[i] == 3)
-            pswd = data.key1[i];
+            pswd = data.key3[i];
         else if(data.key[i] == 4)
-            pswd = data.key1[i];		
+            pswd = data.key4[i];		
         else 
             pswd = data.key[i];
+
+        //openwrt做的一波骚操作，ASCII码的密码转换成16进制比较麻烦
+        //直接在密码前加上"s:"就不用转换了，所以这里密码要去掉头部的"s:"
+        if(data.key[i].length == 1)
+        {
+            if((pswd.length) == 7 || (pswd.length == 15))
+            {
+                pswd = pswd.substring(2);
+            }
+        }
         return pswd;
     }
 
@@ -197,23 +216,23 @@ define(function(require, exports, module){
     function processData(res){
         var doEval = require('Eval');
         var variableArr = [
-            'radio_type',				 // 射频类型
-            'wIndex_24',				 // ssid编号，唯一标识ssid的东西
+            'radio_type',		 // 射频类型
+            'wIndex_24',		 // ssid编号，唯一标识ssid的东西
             'wIndex_5',
             'ssid',              // ssid的名称
             'sta_rate_policy',	 // 限速策略		（1：共享    2：独享）	
-            'sta_rate_down',	   // 下行带宽
+            'sta_rate_down',	 // 下行带宽
             'sta_rate_up',	     // 上行带宽
             'isolate',	         // 无线隔离		（注意：下标只有0）	（1：隔离	 2：不隔离）
-            'encode',	           // 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
-            'hidde',						 // 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
-            'encryption',				 // 加密类型
-            'key',							 // 密钥 或者wep加密的第几个密钥
-            'key1',							 // wep加密的密钥
+            'encode',	         // 编码			（UTF-8：手机优先   GBK：电脑优先简体	BIG5：电脑优先繁体）
+            'hidde',			 // 隐藏ssid		（0：不隐藏ssid1  1：隐藏ssid1）
+            'encryption',		 // 加密类型
+            'key',				 // 密钥 或者wep加密的第几个密钥
+            'key1',				 // wep加密的密钥
             'key2',
             'key3',
             'key4',              
-            'SSID2NUM', 				 // 条目数
+            'SSID2NUM', 		 // 条目数
             'SSID5NUM',          
             'radioSupport'       // 22 55 2255 标识该设备支持的2.4G 5G方式
         ];
@@ -328,7 +347,7 @@ define(function(require, exports, module){
                 },
 
                 "{wifiPassword}": {
-                    "key": "key",
+                    "key": "pssword",
                     "type": "text",
                 },
 
@@ -347,7 +366,6 @@ define(function(require, exports, module){
                     }
                 },
 
-                //"{limitType}(bit/s)"		 : {
                 "下载/上传速率(kbit/s)":{
                     "key": "rate_limit_show",
                     "type": "text",
@@ -386,16 +404,14 @@ define(function(require, exports, module){
         DATA["tableObj"] = tableObj;
 
         function afterFunc(NowTableObj){
-            // 名称/MAC编辑
+            // ssid修改
             NowTableObj.getDom().find('td[data-column-title="SSID"]').each(function(){
                 var $t = $(this);
                 if($t.children('span').length>0){
                     var thisText = $t.children('span').text();
                     var dpkey = $t.parent().find('[data-table-type="select"]').attr('data-primarykey');
-
                     var linkhtml = '<a style="font-size:12px" class="u-inputLink link-forEdit" data-local="'+thisText+'" data-primarykey ="'+dpkey+'">'+thisText+'</a>';
                     var $lh = $(linkhtml);
-
                     var $inputhtml = $('<input type="text" style="height:20px" data-primarykey ="'+dpkey+'"/>');
                     var $btnhtml = $('<button type="button" data-primarykey ="'+dpkey+'" class="btn btn-primary btn-forEditSave" style="position:absolute;top:-3px;left:50px">'+tl('save')+'</button>');
                     var $divhtml = $('<div class="for-textEdit u-hide" style="display:inline-block;width:auto;height:auto;position:relative"></div>');
@@ -407,15 +423,14 @@ define(function(require, exports, module){
 
 
             /* 密码修改*/
+            //这里有个bug，没有密码的时候，密码那里也可以点击修改密码
             NowTableObj.getDom().find('td[data-column-title="{wifiPassword}"]').each(function(){
                 var $t = $(this);
                 if($t.children('span:not(".netsher_table_eyes")').length>0){ //&& $t.children('span').text() != ''){
                     var thisText = $t.children('span').text();
                     var dpkey = $t.parent().find('[data-table-type="select"]').attr('data-primarykey');
-
                     var linkhtml = '<a style="font-size:12px;font-weight:bold" class="u-inputLink link-forEdit netsher_table_paswd" data-local="'+thisText+'" data-primarykey ="'+dpkey+'"  data-pswd="'+(thisText == ''? tl('noPassword'):thisText)+'"  data-hidepswd="******">******</a>';
                     var $lh = $(linkhtml);
-
                     var $inputhtml = $('<input type="text" style="height:20px" data-primarykey ="'+dpkey+'"/>');
                     var $btnhtml = $('<button type="button" data-primarykey ="'+dpkey+'" class="btn btn-primary btn-forEditSave" style="position:absolute;top:-3px;left:50px;z-idnex:1">'+tl('save')+'</button>');
                     var $divhtml = $('<div class="for-textEdit u-hide" style="display:inline-block;width:auto;height:auto;position:relative"></div>');
@@ -437,7 +452,6 @@ define(function(require, exports, module){
                         var $lh1 = $(linkhtml1);
                         $t.append($lh1,$eye);
                     }
-
                 }
             });
         }
@@ -497,16 +511,12 @@ define(function(require, exports, module){
             }else if($t.hasClass('btn-forEditSave')){
                 var $b = $(this);
                 var checkInputFunc = require('P_core/CheckFunctions').getFunc('checkInput');
-
                 var nowtext = $b.parent().children('input').val();
                 var checkres = checkInputFunc(nowtext,['name','1','32','6','eqName']);
-
                 if(checkres.isCorrect){
-
                     var data = database.getSelect({primaryKey : $t.parent().parent().parent().find('[data-table-type="select"]').attr('data-primaryKey')})[0];
                     data.ssid = nowtext;
                     makeModel('edit',data,true)
-
                 }else{
                     Tips.showInfo(checkres.errorStr)
                 }
@@ -656,7 +666,6 @@ define(function(require, exports, module){
 
     /* 新增编辑 弹框*/
     function makeModel(type,data,checkSave){	
-
         var	fre2    = '1',
             fre5    = '1',
             ssid    = '',
@@ -664,6 +673,7 @@ define(function(require, exports, module){
             isolate = '0',
             hidde   = '0',
             pssword = '1',
+            key     = '1',
             key1    = '',
             key2    = '',
             key3    = '',
@@ -690,12 +700,28 @@ define(function(require, exports, module){
             encode  = data.encode || "utf-8"; 
             isolate = data.isolate || 0;
             hidde   = data.hidde || 0;
-            pssword = data["key"];
-            key1    = data.key1 || key1;
-            key2    = data.key2 || key2;
-            key3    = data.key3 || key3;
-            key4    = data.key4 || key4;
+            //注意不要和key搞混了，key只是代表wep加密的第几个密钥
+            //pssword才是真正的密码
+            pssword = data.pssword;
+            key     = data.key  || key;
+            //特别注意，这里是数组
+            key1    = data.key1[0] || key1;
+            key2    = data.key2[0] || key2;
+            key3    = data.key3[0] || key3;
+            key4    = data.key4[0] || key4;
+            if(key.length == 1)
+            {
+                if(key1.length == 7 || key1.length == 15)
+                   key1 = key1.substring(2) 
+                if(key2.length == 7 || key2.length == 15)
+                   key2 = key2.substring(2) 
+                if(key3.length == 7 || key3.length == 15)
+                   key3 = key3.substring(2) 
+                if(key4.length == 7 || key4.length == 15)
+                   key4 = key4.substring(2) 
+            }
 
+            //如果是编辑则，wIndex保持不变
             wIndex_24       = data.wIndex_24;
             wIndex_5        = data.wIndex_5;
             encryption      = data.encryption;
@@ -703,9 +729,9 @@ define(function(require, exports, module){
             psk_wpa_version = data.psk_wpa_version;
             wep_authentication_type = data.wep_authentication_type;
 
-            ste_rate_policy = data.sta_rate_policy || sta_rate_policy;
-            ste_rate_down   = data.sta_rate_down   || sta_rate_down;
-            ste_rate_up     = data.sta_rate_up     || sta_rate_up;
+            sta_rate_policy = data.sta_rate_policy || sta_rate_policy;
+            sta_rate_down   = data.sta_rate_down   || sta_rate_down;
+            sta_rate_up     = data.sta_rate_up     || sta_rate_up;
 
             wpa_key_update_time = "";
             wpa_algorithm       = "";
@@ -988,7 +1014,6 @@ define(function(require, exports, module){
 
         /* 安全设置 */
         function displaye3($tabcon){
-
             var inputlist = [
                 {
                     "prevWord"	:'{screType}',
@@ -1166,6 +1191,7 @@ define(function(require, exports, module){
                     },
                     "afterWord"		 : '{keyFreshTimeTip}'
                 },
+                
 
                 {	sign:'3',
                     "prevWord"	:'WPA{version}',
@@ -1209,6 +1235,7 @@ define(function(require, exports, module){
                     },
                     "afterWord": '{preShareKeyTip}'
                 },
+                /*如果你知道openwrt怎么设置密钥更新周期，就把这个加上去，上面的字段记得赋值
                 {
                     sign:'3',
                     "prevWord"	:'{keyFreshTime}',
@@ -1221,6 +1248,7 @@ define(function(require, exports, module){
                     },
                     "afterWord": '{keyFreshTimeTip}'
                 },
+                */
             ];
 
             var InputGroup = require('InputGroup');
@@ -1229,8 +1257,8 @@ define(function(require, exports, module){
             // 使顶格td长度固定
             $input.find('tr').children(':first').width('138px');
 
-            var wepKeyRadio = '1';
-            // 密钥1234
+            //使用第几个密码
+            var wepKeyRadio = key;
 
             $input.find('[name="key1"]').before('<input type="radio" name="keynum" value="1" style="margin-right:10px" '+(wepKeyRadio=='1'?'checked="true"':'')+'/>');
             $input.find('[name="key2"]').before('<input type="radio" name="keynum" value="2" style="margin-right:10px" '+(wepKeyRadio=='2'?'checked="true"':'')+'/>');
@@ -1366,7 +1394,6 @@ define(function(require, exports, module){
                     }
                 }
             }
-
             saveE();		
             /* 保存 */
             function saveE(){
@@ -1377,9 +1404,6 @@ define(function(require, exports, module){
                 var newstrs = SRLZ.queryJsonToStr(jsons);
                 //radio_type必须有初始值，不能定义了不给初值！
                 var radio_type = "";
-
-                /* 根据不同类型保存不同地址 
-                 * */
 
                 //这里2.4G和5G的判断顺序绝对不能颠倒！
                 if(DATA.tabModalObj.getDom().find('[name="spjk"][value="fre2"]').is(':checked')){
