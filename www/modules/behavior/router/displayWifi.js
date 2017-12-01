@@ -121,7 +121,6 @@ define(function(require, exports, module) {
             "titles": {
                 //"ID" : "id",
                 //
-
                 "网络名称"		 : {
                     "key": "name",
                     "type": "text",
@@ -172,7 +171,6 @@ define(function(require, exports, module) {
                 var data = processData(result),
                     tableData = data["table"];
                 dhcpData  = data["dhcpData"];
-
                 var	tableArr  = tableData["data"];
                 storeTableData(tableArr);
                 // 将lan数据存入数据表
@@ -184,7 +182,6 @@ define(function(require, exports, module) {
                     var $table = getTableDom();
                     // 将表格放入页面
                     $tableCon.append($table);
-
                 }
             },
             error:function(res){

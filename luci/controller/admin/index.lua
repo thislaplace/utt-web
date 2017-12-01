@@ -66,7 +66,10 @@ function index()
     entry({"admin", "fastConfigNet"}, call("fastConfigNet"), _(""), 90)
     entry({"admin", "setFastConfPop"}, call("setfastConfigPop"), _(""), 90)
     entry({"admin", "system_state"}, call("system_state"), _(""), 90)
-    entry({"admin", "dhcpClient"}, call("dhcpClient"), _(""), 90)
+    entry({"admin", "clockManage"}, call("clockManage"), _(""), 90)
+    entry({"admin", "set_ntp_config"}, call("set_ntp_config"), _(""), 90)
+    entry({"admin", "update"}, call("update"), _(""), 90)
+    entry({"admin", "UpdateFirmware"}, call("UpdateFirmware"), _(""), 90)
 end
 
 
@@ -294,12 +297,12 @@ function set_rf_info()
     info.shpreamble  = http.formvalue("shpreamble")
     info.wmm         = http.formvalue("wmm")
 
-    info_5.disabled 	 = http.formvalue("WrlessEnable_5")
-    info_5.hwmode   	 = http.formvalue("WrlessMode_5")
-    info_5.channel  	 = http.formvalue("channel_5")
-    info_5.htmode   	 = http.formvalue("chanWidth_5")
-    info_5.txpower  	 = http.formvalue("power_5")
-    info_5.rts      	 = http.formvalue("rts_5")
+    info_5.disabled    = http.formvalue("WrlessEnable_5")
+    info_5.hwmode      = http.formvalue("WrlessMode_5")
+    info_5.channel     = http.formvalue("channel_5")
+    info_5.htmode      = http.formvalue("chanWidth_5")
+    info_5.txpower     = http.formvalue("power_5")
+    info_5.rts         = http.formvalue("rts_5")
     info_5.shpreamble  = http.formvalue("shpreamble_5")
     info_5.wmm         = http.formvalue("wmm_5")
     for k, v in pairs(info) do
@@ -405,5 +408,90 @@ function system_state()
 end
 
 
-function dhcpClient()
+function clockManage()
+    local str = ""
+    --openwrt 有点奇怪，这里对时区要做相反数处理，如果有人找到问题原因，请把这个坑填了
+    local Timezones = tostring(-tonumber(SS(exec("cat /etc/TZ"), 4, -2)))
+
+    local server1 = SS(exec("uci get system.ntp.server | awk '{print $1}'"), 3, -2)
+    local server2 = SS(exec("uci get system.ntp.server | awk '{print $2}'"), 3, -2)
+    local server3 = SS(exec("uci get system.ntp.server | awk '{print $3}'"), 3, -2)
+    local sntp_enables = SS(exec("uci get system.ntp.enable_server"), 1, -2)
+    str = str .. SF("var errorstr=\"\";")
+    --这里lua获取到的秒数看起来是已经和时区计算过了，直接传给页面就可以
+    str = str .. SF("var sysDateTimes=\"%s\";", os.time())
+    str = str .. SF("var dst_switch=\"off\";")
+    str = str .. SF("var Timezones=\"%s\";", Timezones)
+    str = str .. SF("var sntp_enables=\"%s\";", sntp_enables)
+    str = str .. SF("var server1s=\"%s\";", server1)
+    str = str .. SF("var server2s=\"%s\";", server2)
+    str = str .. SF("var server3s=\"%s\";", server3)
+    http.write_json(str)
+end
+
+
+function set_ntp_config()
+    local ymd           = http.formvalue("ymd")
+    local hour          = http.formvalue("hour")
+    local min           = http.formvalue("min")
+    local second        = http.formvalue("second")
+    local server1       = http.formvalue("NTPServerIP")
+    local server2       = http.formvalue("server2")
+    local server3       = http.formvalue("server3")
+    local timezone      = http.formvalue("time_zone")
+    local enable_server = http.formvalue("SntpEnable")
+
+    if tonumber(timezone) > 0 then
+        OE("echo \"UTC-\"" .. timezone .. ">/etc/TZ")
+    elseif tonumber(timezone) == 0 then
+        OE("echo \"UTC>/etc/TZ\"")
+    else
+        OE("echo \"UTC+\"" .. timezone .. ">/etc/TZ")
+    end
+
+    OE("uci set system.ntp.server=0." .. server1 .. ">/dev/null 2>&1")
+    OE("uci add_list system.ntp.server=1." .. server2 .. ">/dev/null 2>&1")
+    OE("uci add_list system.ntp.server=2." .. server3 .. ">/dev/null 2>&1")
+    OE("uci set system.ntp.enable_server=" .. enable_server .. ">/dev/null 2>&1")
+    OE("uci commit system >/dev/null 2>&1")
+    OE("/etc/init.d/sysntpd restart >/dev/null 2>&1")
+
+    --linux设置时间命令 date -s "2017-12-01 12:00:00"
+    if enable_server == '0' then
+        OE("date -s \"" .. ymd .. " " .. hour .. ":" .. min .. ":" .. second .. "\" >/dev/null 2>&1")
+    end
+
+    local str = "var errorstr=\"\"; var status=\"1\";"
+    http.write_json(str)
+end
+
+
+function update()
+    local str = ""
+    str = str .. "var ProductLinkID=\"http://www.utt.com.cn/downloadcenter.php?filetypeid=3&model=6530G&lang=zhcn\";"
+    str = str .. SF("var revisions=\"%s\";", SWVERSION)
+    str = str .. SF("var hardwareID=\"%s\";", HWVERSION)
+    http.write_json(str)
+end
+
+
+function UpdateFirmware()
+	local fp
+	luci.http.setfilehandler(
+		function(meta, chunk, eof)
+			if not fp then
+				if meta and meta.name == "image" then
+					fp = io.open(image_tmp, "w")
+				else
+					fp = io.popen(restore_cmd, "w")
+				end
+			end
+			if chunk then
+				fp:write(chunk)
+			end
+			if eof then
+				fp:close()
+			end
+		end
+	)
 end
