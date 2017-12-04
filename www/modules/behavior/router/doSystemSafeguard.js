@@ -63,7 +63,7 @@ define(function(require, exports, module){
             });
 			$('a[href="#4"]').click(function(event) {
 				Path.changePath($(this).text());
-				require.async('./displaySystem', function(obj){		
+				require.async('./displayTaskPlan', function(obj){		
 					obj.display($('#4'));
 				});
 			});					

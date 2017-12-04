@@ -2,48 +2,31 @@ define(function(require, exports, module) {
     var DATA = {};
     var Translate  = require('Translate');
     var dicArr     = ['common','doNetworkManagementStrategy'];
+
     function T(_str){
         return Translate.getValue(_str, dicArr);
     }
+
     function processData(jsStr) {
         var doEval = require('Eval');
-        var codeStr = jsStr,
-            variableArr = [
-                /*表格数据*/
-                "UserNames",
-                "UserPass",
-                "role",
-                "maxNum"
-            ];
-        // 获得js字符串执行后的结果
-        var result = doEval.doEval(codeStr, variableArr),
+        var variableArr = ["type", "time", "content"];
+        var result = doEval.doEval(jsStr, variableArr),
             isSuccess = result["isSuccessful"];
-        // 判断代码字符串执行是否成功
-        if (isSuccess) {
-            // 获得所有的变量
-            var data = result["data"];
-            // 将返回的JS代码执行所生成的变量进行复制
-            var titleArr = ["UserNames",
-                "UserPass",
-                "role"
-            ], // 表格头部的标题列表
-                UserNamesArr  	=data['UserNames'],
-                UserPassArr 	=data['UserPass'],
-                roleArr			=data["role"];
-            DATA['maxNum']	=data['maxNum'];
 
+        if (isSuccess) {
+            var data = result["data"];
+            var titleArr = ["type", "time", "content" ], // 表格头部的标题列表
+                type       	=data["type"],
+                time 	    =data["time"],
+                content		=data["content"];
+            DATA['maxNum']	=10;
 
             // 把数据转换为数据表支持的数据结构
             var dataArr = []; // 将要插入数据表中的数据
-            DATA['length']=UserNamesArr.length;
-            // 通过数组循环，转换vlan数据的结构
-            UserNamesArr.forEach(function(item, index, arr) {
-                var arr = [];
-                arr.push( UserNamesArr[index]);
-                arr.push( UserPassArr[index]);
-                arr.push(roleArr[index]);
-                dataArr.push(arr);
-            });
+            DATA['length']=type.length;
+            dataArr.type = type; 
+            dataArr.time = time; 
+            dataArr.content = content; 
 
             // 返回处理好的数据
             var tableData = {
@@ -52,7 +35,6 @@ define(function(require, exports, module) {
             };
             return {
                 table: tableData
-
             };
         } else {
             console.log('字符串解析失败')
@@ -76,8 +58,8 @@ define(function(require, exports, module) {
                     deleteBtnClick();
                 }
             }
-
         ];
+
         var database = DATA["tableData"];
         var headData = {
             "btns" : btnList
@@ -93,16 +75,8 @@ define(function(require, exports, module) {
                     "key": "ID",
                     "type": "text"
                 },
-                "任务名"		 : {
-                    "key": "Name",
-                    "type": "text"
-                },
-                "生效对象"		 : {
-                    "key": "open",
-                    "type": "text"
-                },
                 "启动类型"     :	{
-                    "key": "start",
+                    "key": "type",
                     "type": "text"
                 },
                 "运行时间"		 : {
@@ -110,7 +84,7 @@ define(function(require, exports, module) {
                     "type": "text"
                 },
                 "任务内容"		 : {
-                    "key": "task",
+                    "key": "content",
                     "type": "text"
                 },
                 "{edit}": {
@@ -164,6 +138,7 @@ define(function(require, exports, module) {
     function otherFunc(tableObj){
         tableObj.getDom().find('td[data-column-title="{username}"]>[data-local="admin"]').parent().prev().find('input').remove();
     }
+
     function addSubmitClick(modalID) {
         var Serialize = require('Serialize');
         var database   = DATA["tableData"];
@@ -189,7 +164,6 @@ define(function(require, exports, module) {
             }else{
                 pStr="Action=edit&usernameold="+data.UserNames+"&"+queryStr;
             }
-
 
             $.ajax({
                 url: '/goform/formUser',
@@ -267,7 +241,6 @@ define(function(require, exports, module) {
         }
     }
 
-
     function showEditAndAddModal(config) {
         // 加载模态框模板模块
         var modal='';
@@ -297,8 +270,8 @@ define(function(require, exports, module) {
             modal = modalobj.getDom(); // 模态框的jquery对象
         $('body').append(modal);
 
-
         var inputList = [
+            /*
             {
                 "display" : true,  //是否显示：否
                 "necessary": true,  //是否添加红色星标：是
@@ -306,33 +279,16 @@ define(function(require, exports, module) {
                 "inputData": {
                     "type"       : 'text',
                     "name"       : 'username',
-                    "value"		 : config.UserNames,
+                    "value"		 : config.taskname,
                     "checkDemoFunc" : ['checkName','1','31'] 
                 },
             },
-            {   
-                "prevWord" : '生效对象',
-                "inputData": {
-                    "defaultValue" : config.role, //默认值对应的value值
-                    "type": 'select',
-                    "name": 'object',
-                    "items" : [
-                        {
-                            "value" : 'viewer',
-                            "name"  : '本设备'
-                        },
-                        {
-                            "value" : 'ap',
-                            "name"  : 'AP'
-                        }
-                    ]
-                }
-            },
+            */
 
             {   
                 "prevWord" : '任务间隔',
                 "inputData": {
-                    "defaultValue" : config.role, //默认值对应的value值
+                    "defaultValue" : config.type, //默认值对应的value值
                     "type": 'select',
                     "name": 'interval',
                     "items" : [
@@ -358,7 +314,7 @@ define(function(require, exports, module) {
             {   
                 "prevWord" : '运行时间',
                 "inputData": {
-                    "defaultValue" : config.role, //默认值对应的value值
+                    "defaultValue" : config.time, //默认值对应的value值
                     "type": 'select',
                     "name": 'time',
                     "items" : [
@@ -394,9 +350,9 @@ define(function(require, exports, module) {
                 }
             },
             {   
-                "prevWord" : '生效对象',
+                "prevWord" : '任务内容',
                 "inputData": {
-                    "defaultValue" : config.role, //默认值对应的value值
+                    "defaultValue" : 'device', //默认值对应的value值
                     "type": 'select',
                     "name": 'TakeEffect',
                     "items" : [
@@ -409,12 +365,9 @@ define(function(require, exports, module) {
             }
         ]
 
-
         var InputGroup = require('InputGroup'),
             $dom = InputGroup.getDom(inputList);
         $dom.find("tr:nth-child(4)").append('<td><input type="text" style="width:40px;margin: 0 5px;">:<input type="text" style="width:40px;margin: 0 5px;">:<input type="text" style="width:40px;margin: 0 5px;"></td>')
-        console.log("----")
-        console.log($dom.find("tr:nth-child(4)"))
         DATA['dom']=$dom;
         modal.find('.modal-body').empty().append($dom);
         modal.modal('show');
@@ -436,8 +389,8 @@ define(function(require, exports, module) {
         }	
         showEditAndAddModal(config);
     }
-    function addBtnClick() {
 
+    function addBtnClick() {
         if(DATA['length']>=DATA['maxNum']){
             require('Tips').showWarning(T("word_1"));
             display($('#1'));
@@ -453,9 +406,8 @@ define(function(require, exports, module) {
         }	
         showEditAndAddModal(config);
     }
-    function deleteBtnClick() {
-        //获得提示框组件调用方法
 
+    function deleteBtnClick() {
         var Tips = require('Tips');
         var database = DATA["tableData"];
         var tableObj = DATA["tableObj"];
@@ -519,26 +471,38 @@ define(function(require, exports, module) {
         } else {
             Tips.showWarning('{upleSelectDelName}', 2);
         }
-
     }
 
 
     function storeTableData(data) {
-
+        console.log(data);
         // 获取数据库模块，并建立一个数据库
-        var Database = require('Database'),
-            database = Database.getDatabaseObj(); // 数据库的引用
+        var Database = require('Database');
+        var database = Database.getDatabaseObj(); // 数据库的引用
         // 存入全局变量DATA中，方便其他函数使用
         DATA["tableData"] = database;
         // 声明字段列表
         var fieldArr = [
-            "UserNames",
-            "UserPass",
-            "role"
+            "ID",
+            "type",
+            "time",
+            "content"
         ];
+
+        var baseData = [];
+        for (var i=0; i<DATA.length; i++)
+        {
+            console.log(data.type, data.time, data.content);
+            baseData.push([
+                i+1,
+                data.type[i],
+                data.time[i],
+                data.content[i]
+            ]);   
+        }
         // 将数据存入数据表中
         database.addTitle(fieldArr);
-        database.addData(data);
+        database.addData(baseData);
     }
 
     function displayTable($container) {
@@ -554,8 +518,8 @@ define(function(require, exports, module) {
             type: 'GET',
             success: function(result) {
                 result = JSON.parse(result);
-                var data = processData(result),
-                    tableData = data["table"];
+                var data = processData(result);
+                var tableData = data["table"];
                 var	titleArr  = tableData["title"],
                     tableArr  = tableData["data"];
                 storeTableData(tableArr);				
@@ -566,11 +530,9 @@ define(function(require, exports, module) {
     }
 
     function display($container) {
-
         // 清空标签页容器
         $container.empty();
         displayTable($container);
-
     }
     // 提供对外接口
     module.exports = {

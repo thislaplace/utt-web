@@ -70,6 +70,7 @@ function index()
     entry({"admin", "set_ntp_config"}, call("set_ntp_config"), _(""), 90)
     entry({"admin", "update"}, call("update"), _(""), 90)
     entry({"admin", "UpdateFirmware"}, call("UpdateFirmware"), _(""), 90)
+    entry({"admin", "taskplan"}, call("taskplan"), _(""), 90)
 end
 
 
@@ -93,7 +94,15 @@ function allConfig_fastConfigPop()
 end
 
 function adminConfig()
-    local str = 'var UserNames=new Array();var UserPass=new Array();var role=new Array();var prompt= "0";var flag= "0";UserNames[0] = "admin";UserPass[0] = "admin";role[0] = "adm";var maxNum=5;var errorstr="";'
+    local str = "var type = [];var time = []; var content = [];"
+    local task_type = "week"
+    local time = "Monday"
+    local num = 1
+    for i=0, num-1 do 
+        str = str .. SF("type[%d] = \"%s\";", i,  task_type)
+        str = str .. SF("time[%d] = \"%s\";", i, time)
+        str = str .. SF("content[%d] = \"reboot\";", i)
+    end
     http.write_json(str)
 end
 
@@ -501,3 +510,17 @@ function UpdateFirmware()
     )
 end
 
+
+function taskplan()
+    variableArr = ['names', 'types', 'times',
+    'cmds','totalrecs','max_totalrecs',
+    'errorstr',
+    'acApTaskSchdule',
+    'apNames',
+    'apTimes',
+    'apTypes',
+    'apCmds',
+    'ap_max_totalrecs',
+    'ap_totalrecs'
+
+end
