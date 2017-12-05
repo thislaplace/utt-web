@@ -9,7 +9,7 @@ define(function(require, exports, module) {
 
     function processData(jsStr) {
         var doEval = require('Eval');
-        var variableArr = ["type", "time", "content"];
+        var variableArr = ["type", "day", "hour", "minute", "content"];
         var result = doEval.doEval(jsStr, variableArr),
             isSuccess = result["isSuccessful"];
 
@@ -17,7 +17,9 @@ define(function(require, exports, module) {
             var data = result["data"];
             var titleArr = ["type", "time", "content" ], // 表格头部的标题列表
                 type       	=data["type"],
-                time 	    =data["time"],
+                day 	    =data["day"],
+                hour 	    =data["hour"],
+                minute 	    =data["minute"],
                 content		=data["content"];
             DATA['maxNum']	=10;
 
@@ -25,7 +27,9 @@ define(function(require, exports, module) {
             var dataArr = []; // 将要插入数据表中的数据
             DATA['length']=type.length;
             dataArr.type = type; 
-            dataArr.time = time; 
+            dataArr.day  = day; 
+            dataArr.hour = hour; 
+            dataArr.minute = minute; 
             dataArr.content = content; 
 
             // 返回处理好的数据
@@ -76,7 +80,7 @@ define(function(require, exports, module) {
                     "type": "text"
                 },
                 "启动类型"     :	{
-                    "key": "type",
+                    "key": "type_for_table",
                     "type": "text"
                 },
                 "运行时间"		 : {
@@ -99,7 +103,8 @@ define(function(require, exports, module) {
                                 var data = database.getSelect({
                                     primaryKey: primaryKey
                                 });
-                                console.dir(data);
+                                console.log("*******************");
+                                console.log(data[0].type);
                                 editBtnClick(data[0]);
                             }
                         },
@@ -158,15 +163,15 @@ define(function(require, exports, module) {
                 queryJson = Serialize.queryArrsToJson(queryArr),
                 queryStr = Serialize.queryArrsToStr(queryArr);
             var pStr;
-            console.dir(data);
             if(modalID=='modal-add'){
                 pStr="Action=add&"+queryStr;
             }else{
-                pStr="Action=edit&usernameold="+data.UserNames+"&"+queryStr;
+                //pStr="Action=edit&usernameold="+data.UserNames+"&"+queryStr;
+                pStr="Action=edit&"+queryStr;
             }
 
             $.ajax({
-                url: '/goform/formUser',
+                url: '/cgi-bin/luci/admin/setPlanTask',
                 type: 'POST',
                 data: pStr,
                 success: function(result) {
@@ -271,20 +276,6 @@ define(function(require, exports, module) {
         $('body').append(modal);
 
         var inputList = [
-            /*
-            {
-                "display" : true,  //是否显示：否
-                "necessary": true,  //是否添加红色星标：是
-                "prevWord": '任务名',
-                "inputData": {
-                    "type"       : 'text',
-                    "name"       : 'username',
-                    "value"		 : config.taskname,
-                    "checkDemoFunc" : ['checkName','1','31'] 
-                },
-            },
-            */
-
             {   
                 "prevWord" : '任务间隔',
                 "inputData": {
@@ -314,9 +305,9 @@ define(function(require, exports, module) {
             {   
                 "prevWord" : '运行时间',
                 "inputData": {
-                    "defaultValue" : config.time, //默认值对应的value值
+                    "defaultValue" : config.day, //默认值对应的value值
                     "type": 'select',
-                    "name": 'time',
+                    "name": 'day',
                     "items" : [
                         {
                             "value" : 'Monday',
@@ -365,11 +356,125 @@ define(function(require, exports, module) {
             }
         ]
 
-        var InputGroup = require('InputGroup'),
-            $dom = InputGroup.getDom(inputList);
-        $dom.find("tr:nth-child(4)").append('<td><input type="text" style="width:40px;margin: 0 5px;">:<input type="text" style="width:40px;margin: 0 5px;">:<input type="text" style="width:40px;margin: 0 5px;"></td>')
-        DATA['dom']=$dom;
-        modal.find('.modal-body').empty().append($dom);
+        var h = config.hour || '';
+        var m = config.minute || '';
+
+        var IG = require('InputGroup');
+        var $inputs = IG.getDom(inputList);
+        var afterStr = '<input class="worktime-box" name="hour" value="' + h + '" type="text"><span>:</span><input class="worktime-box" name="minute"  value="' + m + '" type="text"><span>:</span><input class="worktime-box" name="second" type="text" disabled="disabled" value="00"/>';
+        $inputs.find('[name="day"]').css({marginRight:'10px'}).after(afterStr);
+        $inputs.find('.worktime-box').css({width:'50px',marginLeft:'10px',marginRight:'10px'});
+        $inputs.find('[name="hour"]').css({marginLeft:'0px'});
+        $inputs.find('[name="hour"],[name="minute"],[name="second"]').keyup(function(){
+            if($(this).val().length>=2){
+                $(this).blur();
+                if($(this).next().next().hasClass('worktime-box')){
+                    $(this).next().next().focus();
+                }
+            }
+        });
+
+        $inputs.find('[name="hour"]').keyup(function(){
+            var vals = $(this).val();
+            if(Number(vals)>23){
+                $(this).val('23');
+            }else if(Number(vals)<0){
+                $(this).val('00');
+            }
+        });
+
+        $inputs.find('[name="minute"],[name="second"]').keyup(function(){
+            var vals = $(this).val();
+            if(Number(vals)>59){
+                $(this).val('59');
+            }else if(Number(vals)<0){
+                $(this).val('00');
+            }
+        });
+
+        $inputs.find('[name="hour"],[name="minute"],[name="second"]').blur(function(){
+            var vals = $(this).val();
+            if(Number(vals)>=0 && Number(vals)<10){
+                $(this).val('0'+Math.round(Number(vals)));
+            }
+            if(isNaN(vals)){
+                $(this).val('00');
+            }
+        });
+
+        $inputs.click(function(event){
+            var e = event || window.event;
+            var targ = e.target || e.srcElement;
+            var $t = $(targ);
+            if($t.attr('name') == 'hour'){
+                $inputs.find('[name="minute"],[name="second"]').trigger('blur');
+            }else if($t.attr('name') == 'minute'){
+                $inputs.find('[name="hour"],[name="second"]').trigger('blur');
+            }else if($t.attr('name') == 'second'){
+                $inputs.find('[name="hour"],[name="minute"]').trigger('blur');
+            }else{
+                $inputs.find('[name="hour"],[name="minute"],[name="second"]').trigger('blur');
+            }
+        })
+
+        $inputs.find('[name="hour"]').checkdemofunc('checkNum','00','59');
+        $inputs.find('[name="minute"]').checkdemofunc('checkNum','00','59');
+
+        makeTheAfterInputChange();
+        $inputs.find('[name="interval"]').change(function(){
+            makeTheAfterInputChange();
+        });
+
+        function makeTheAfterInputChange(){
+            var a1 = $inputs.find('[name="day"]'),
+                a2 = $inputs.find('[name="hour"]'),
+                a3 = $inputs.find('[name="minute"]'),
+                all = $inputs.find('[name="day"]').parent().parent();
+            a1.addClass('u-hide');
+            a2.addClass('u-hide').removeAttr('disabled');
+            a3.addClass('u-hide');
+            all.addClass('u-hide');
+            var taskin = $inputs.find('[name="interval"]').val();
+            switch(taskin){
+                case 'week':
+                    all.removeClass('u-hide');
+                    a1.removeClass('u-hide').val(config.day || '01');
+                    a2.removeClass('u-hide').val(config.hour || '00');
+                    a3.removeClass('u-hide').val(config.minute || '00');
+                    break;
+                case 'day':
+                    all.removeClass('u-hide');
+                    a1.addClass('u-hide')
+                    a2.removeClass('u-hide').val(config.hour || '00');
+                    a3.removeClass('u-hide').val(config.minute || '00');
+                    break;
+                case 'hour':
+                    all.removeClass('u-hide');
+                    a1.addClass('u-hide')
+                    a2.removeClass('u-hide').val('').attr('disabled','true');
+                    a3.removeClass('u-hide').val(config.minute || '00');
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        /*
+        modalObj.insert($inputs);
+        var $modalDom = modalObj.getDom();
+        $('body').append($modalDom);
+
+        var Translate  = require('Translate');
+        var tranDomArr = [$modalDom];
+        var dicArr     = ['common','lanConfig'];
+        Translate.translate(tranDomArr, dicArr);
+
+        modalObj.show();
+        */
+        
+
+        DATA['dom']=$inputs;
+        modal.find('.modal-body').empty().append($inputs);
         modal.modal('show');
         var Translate  = require('Translate');
         var tranDomArr = [modal];
@@ -378,14 +483,14 @@ define(function(require, exports, module) {
     }
 
     function editBtnClick(data){
-
         var config={
             "modalID"   	:'modal-edit',
             "modalTitle"	:'{edit}',
             "saveFunc"  	:addSubmitClick,
-            "UserNames"		:data.UserNames,
-            "UserPass"		:data.UserPass,
-            "role"			:data.role
+            "type"          :data.type,
+            "day"           :data.day, 
+            "hour"          :data.hour, 
+            "minute"        :data.minute,
         }	
         showEditAndAddModal(config);
     }
@@ -400,9 +505,10 @@ define(function(require, exports, module) {
             "modalID"   	:'modal-add',
             "modalTitle"	:'{add}',
             "saveFunc"  	:addSubmitClick,
-            "UserNames":"",
-            "UserPass":"",
-            "role"    :"viewer"
+            "type"          :"week",  
+            "day"           :"Monday",  
+            "hour"          :"00",  
+            "minute"        :"00",  
         }	
         showEditAndAddModal(config);
     }
@@ -474,6 +580,47 @@ define(function(require, exports, module) {
     }
 
 
+    function converTime(data, i){
+        if(data.type[i] == 'week'){
+            if(data.day[i] == 'Monday')
+                day = '星期一';
+            else if(data.day[i] == 'Tuesday')
+                day = '星期二';
+            else if(data.day[i] == 'Wednesday')
+                day = '星期三';
+            else if(data.day[i] == 'Thursday')
+                day = '星期四';
+            else if(data.day[i] == 'Friday')
+                day = '星期五';
+            else if(data.day[i] == 'Saturday')
+                day = '星期六';
+            else if(data.day[i] == 'Sunday')
+                day = '星期日';
+            return day+" "+data.hour[i]+":"+data.minute[i]+":00";
+
+        } else if (data.type[i] == 'day'){
+            return data.hour[i]+":"+data.minute[i]+":00";
+
+        } else if (data.type[i] == 'hour'){
+            return data.minute[i]+"分";
+
+        } else if (data.type[i] == 'Minute'){
+            return "每分钟";
+        }
+    }
+
+    function converType(type){
+        if(type == 'week')
+            return '每周';
+        else if(type == 'day')
+            return '每天';
+        else if(type == 'hour')
+            return '每小时';
+        else if(type == 'Minute')
+            return '每分钟';
+    }
+
+
     function storeTableData(data) {
         console.log(data);
         // 获取数据库模块，并建立一个数据库
@@ -484,19 +631,26 @@ define(function(require, exports, module) {
         // 声明字段列表
         var fieldArr = [
             "ID",
-            "type",
+            "type_for_table",//表格显示用的
             "time",
+            "type",
+            "day",
+            "hour",
+            "minute",
             "content"
         ];
 
         var baseData = [];
         for (var i=0; i<DATA.length; i++)
         {
-            console.log(data.type, data.time, data.content);
             baseData.push([
                 i+1,
+                converType(data.type[i]),
+                converTime(data, i),
                 data.type[i],
-                data.time[i],
+                data.day[i],
+                data.hour[i],
+                data.minute[i],
                 data.content[i]
             ]);   
         }
@@ -518,6 +672,8 @@ define(function(require, exports, module) {
             type: 'GET',
             success: function(result) {
                 result = JSON.parse(result);
+                console.log("************************************")
+                console.log(result)
                 var data = processData(result);
                 var tableData = data["table"];
                 var	titleArr  = tableData["title"],

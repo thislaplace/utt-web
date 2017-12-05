@@ -70,28 +70,6 @@ define(function(require, exports, module) {
                 "afterWord": ''
             },
             { 
-                "prevWord": '{effectObj}',
-                "disabled":config.type=='modify'? true:false,
-                "display":DATA.acApTaskSchdule==1 ? true:false,
-                "inputData": {
-                    "type": 'select',
-                    "name": 'obj',
-                    "defaultValue":data.obj=='AP'?'02':'01',
-                    // "defaultValue":jiange || '01',
-                    "items" : [
-                        {
-                            "value" : '01',
-                            "name"  : '{localDev}',
-                        },
-                        {
-                            "value" : '02',
-                            "name"  : 'AP',
-                        }
-                    ]
-                },
-                "afterWord": ''
-            },      
-            { 
                 "prevWord": '{taskItv}',
                 "inputData": {
                     "type": 'select',
@@ -511,12 +489,7 @@ define(function(require, exports, module) {
     function removeTask(data) {
         var urlstr='';
         var IPName = data["name"];
-        var obj=data["obj"];
-        if(obj == 'AP'){
-            urlstr='/goform/formTaskDel_ap';
-        }else{
-            urlstr='/goform/formTaskDel';
-        }
+        urlstr='/goform/formTaskDel';
         var queryStr = 'delstr=' + IPName ;
         var Tips = require('Tips');
         $.ajax({
@@ -559,7 +532,7 @@ define(function(require, exports, module) {
         // 存入全局变量DATA中，方便其他函数使用
         DATA["tableData"] = database;
         // 声明字段列表
-        var fieldArr = ['name', 'obj','type','time', 'context'];
+        var fieldArr = ['name', 'type','time', 'context'];
         // 将数据存入数据表中
         database.addTitle(fieldArr);
         database.addData(data);
@@ -583,7 +556,7 @@ define(function(require, exports, module) {
         // 存入全局变量DATA中，方便其他函数使用
         DATA["taskData"] = database;
         // 声明字段列表
-        var fieldArr = ['name', 'obj', 'type','time', 'context'];
+        var fieldArr = ['name', 'type','time', 'context'];
         // 将数据存入数据表中
         database.addTitle(fieldArr);
         database.addData(data);
@@ -600,6 +573,7 @@ define(function(require, exports, module) {
         var Tips = require('Tips');
         var codeStr = jsStr,
             // 定义需要获得的变量
+            /*
             variableArr = ['names', 'types', 'times',
                 'cmds','totalrecs','max_totalrecs',
                 'errorstr',
@@ -611,6 +585,8 @@ define(function(require, exports, module) {
                 'ap_max_totalrecs',
                 'ap_totalrecs'
             ];
+            */
+            variableArr = ['names', 'types', 'times', 'cmds'];
 
         // 获得js字符串执行后的结果
         var result = doEval.doEval(codeStr, variableArr),
@@ -625,6 +601,7 @@ define(function(require, exports, module) {
                 types = data["types"],
                 times = data["times"],
                 cmds = data["cmds"],
+                /*
                 acApTaskSchdule = data["acApTaskSchdule"],
                 apNames = data["apNames"],
                 apTimes = data["apTimes"],
@@ -641,12 +618,13 @@ define(function(require, exports, module) {
             DATA.ap_max_totalrecs=ap_max_totalrecs||0;
             DATA.ap_totalrecs=ap_totalrecs||0;
             DATA.acApTaskSchdule=acApTaskSchdule;
+                */
 
             var dataArr = []; // 将要插入数据表中的数据
             names.forEach(function(item, index, arr) {
                 var arr = [];
                 //arr.push(nameArr[index]);
-                arr.push(names[index]);
+                //arr.push(names[index]);
                 arr.push('{localDev}');
                 arr.push(types[index]);  
                 arr.push(times[index]);
@@ -658,6 +636,7 @@ define(function(require, exports, module) {
                 dataArr.push(arr);
             });
 
+            /*
             if(acApTaskSchdule==1){
                 apNames.forEach(function(item, index, arr) {
                     var arr = [];
@@ -674,6 +653,7 @@ define(function(require, exports, module) {
                     dataArr.push(arr);
                 });      
             }
+            */
 
             // 返回处理好的数据
             var tableData = {
@@ -699,11 +679,9 @@ define(function(require, exports, module) {
         var name = data["name"],
             type = data["type"],
             time = data["time"],
-            obj  = data["obj"],
             context = data["context"];   
         var data ={
             ID:name,
-            obj:obj,
             selDateType:type,
             selDay:time,
             selContent:context
@@ -765,10 +743,6 @@ define(function(require, exports, module) {
                     "key": "name",
                     "type": "text",
                 },
-                "{effectObj}"     : {
-                    "key": "obj",
-                    "type": "text",
-                },       
                 "{startType}"     : {
                     "key": "type",
                     "type": "text",

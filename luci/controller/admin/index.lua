@@ -70,7 +70,7 @@ function index()
     entry({"admin", "set_ntp_config"}, call("set_ntp_config"), _(""), 90)
     entry({"admin", "update"}, call("update"), _(""), 90)
     entry({"admin", "UpdateFirmware"}, call("UpdateFirmware"), _(""), 90)
-    entry({"admin", "taskplan"}, call("taskplan"), _(""), 90)
+    entry({"admin", "setPlanTask"}, call("setPlanTask"), _(""), 90)
 end
 
 
@@ -94,13 +94,47 @@ function allConfig_fastConfigPop()
 end
 
 function adminConfig()
-    local str = "var type = [];var time = []; var content = [];"
-    local task_type = "week"
-    local time = "Monday"
-    local num = 1
+    --24 12 * * Monday reboot
+    local str = "var type = [];var day = []; var hour = []; var minute = []; var content = [];"
+    local task_type = {}
+    local day = {}
+    local hour = {}
+    local minute = {}
+    --local num = tonumber(exec("cat /etc/crontabs/root | wc -l"))
+    local num = tonumber(exec("cat /etc/crontabs/admin | wc -l"))
+
+    for i=1, num do
+        local cmd = SF("cat /etc/crontabs/admin | sed -n '%dp'", i)
+        local _type = tonumber(exec(cmd .. "| tr -cd '*' | wc -c"))
+
+        if _type == 2 then
+            task_type[i] = "week"
+            day[i] = SS(exec(cmd .. "| awk '{print $5}'"), 1, -2)
+            hour[i] = SS(exec(cmd .. "| awk '{print $2}'"), 1, -2)
+            minute[i] = SS(exec(cmd .. "| awk '{print $1}'"), 1, -2)
+        elseif _type == 3 then
+            task_type[i] = "day"
+            day[i] = ""
+            hour[i] = SS(exec(cmd .. "| awk '{print $2}'"), 1, -2)
+            minute[i] = SS(exec(cmd .. "| awk '{print $1}'"), 1, -2)
+        elseif _type == 4 then
+            task_type[i] = "hour"
+            day[i] = ""
+            hour[i] = ""
+            minute[i] = SS(exec(cmd .. "| awk '{print $1}'"), 1, -2)
+        elseif _type == 5 then
+            task_type[i] = "Minute"
+            day[i] = ""
+            hour[i] = ""
+            minute[i] = ""
+        end
+    end
+
     for i=0, num-1 do 
-        str = str .. SF("type[%d] = \"%s\";", i,  task_type)
-        str = str .. SF("time[%d] = \"%s\";", i, time)
+        str = str .. SF("type[%d] = \"%s\";", i,  task_type[i+1])
+        str = str .. SF("day[%d] = \"%s\";", i, day[i+1])
+        str = str .. SF("hour[%d] = \"%s\";", i, hour[i+1])
+        str = str .. SF("minute[%d] = \"%s\";", i, minute[i+1])
         str = str .. SF("content[%d] = \"reboot\";", i)
     end
     http.write_json(str)
@@ -511,16 +545,26 @@ function UpdateFirmware()
 end
 
 
-function taskplan()
-    variableArr = ['names', 'types', 'times',
-    'cmds','totalrecs','max_totalrecs',
-    'errorstr',
-    'acApTaskSchdule',
-    'apNames',
-    'apTimes',
-    'apTypes',
-    'apCmds',
-    'ap_max_totalrecs',
-    'ap_totalrecs'
-
+function setPlanTask()
+    local _type = http.formvalue("interval")
+    local day = http.formvalue("day")
+    local hour = http.formvalue("hour")
+    local minute = http.formvalue("minute")
+    local second = http.formvalue("second")
+    --local FILE = "/etc/crontabs/root"
+    local FILE = "/etc/crontabs/admin"
+    local file = io.open(FILE,"a")
+    if file ~= nil then
+        if (_type == "week") then
+            file:write(minute.." "..hour.." * * "..day.." reboot\n")
+        elseif (_type == "day") then
+            file:write(minute.." "..hour.." * * * reboot\n")
+        elseif (_type == "hour") then
+            file:write(minute.." * * * * reboot\n")
+        elseif (_type == "Minute") then
+            file:write("*/1 * * * * reboot\n")
+        end
+        file:close()
+        OE("/etc/init.d/cron restart >/dev/null 2>&1")
+    end
 end
